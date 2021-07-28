@@ -1,0 +1,98 @@
+/*
+웹-서버 통신 데이터 형식(예시)
+이력: 1) Version: 1.0 (2021.07.20 created by taeyoung)
+
+본 규격은 변경될 수 있고, 개발 방향에 따라 나뉘어 세분화 될 수 있습니다.
+
+kospi200 종목으로 일단 한정
+
+사용: 웹브라우저 -> 서버 통신
+updateInfo-updatedStock항목이 있으면 db 테이블을 업데이트하고 시간을 기록한다.
+updateInfo-deletedStock항목이 있으면 해당 db 테이블을 숨김 처리한다.
+tradeInfo 항목은 다음과 같이 구성된다.
+"종목명(혹은 종목 코드)":"사기/팔기-수량-가격"
+algorithnInfo 항목은 알고리즘의 일시중단 시기를 정한다.
+*/
+
+{
+	"securityCheck": null,
+	"updateInfo": {
+		"updatedStock": [],
+		"deletedStock": []
+	},
+	"tradeInfo": {
+		"삼성전자우": [0, 0, 0],
+		"LG화학": [0, 0, 0],
+		"셀트리온헬스케어": [0, 0, 0],
+		"하나전자": [0, 0, 0]
+	},
+	"algorithmInfo": {
+		"삼성전자우": [0, 500]
+	}
+}
+
+/*
+
+1. 처음 관심 종목 설정하는 시나리오(자동매매 등록)
+{
+    "securityCheck": null,
+    "updateInfo": {
+        "updatedStock":["삼성전자우", "LG화학", "셀트리온헬스케어", "하나전자"],
+        "deletedStock":[]
+    },
+	"tradeInfo": {
+	},
+	"algorithmInfo": {
+	}
+}
+
+-->백엔드에서 해당 json을 받으면 db 업데이트
+
+*/
+
+/*
+
+2. 수동매매 시나리오 (풀매수)  사는 코드 49, 파는 코드: 89로 가정
+{
+    "securityCheck": null,
+    "updateInfo": {
+        "updatedStock":[],
+        "deletedStock":[]
+    },
+	"tradeInfo": {
+		"삼성전자우": [49, 100, 80000],
+		"LG화학": [49, 100, 9900000],
+		"셀트리온헬스케어": [49, 150, 270000],
+		"하나전자": [49, 110, 20000]
+	},
+	"algorithmInfo": {
+	}
+}
+
+-->백엔드에서 해당 json을 받으면 매매를 처리하는 모듈을 호출 후 파싱해서 인자 넘겨줌
+
+*/
+
+/*
+
+3. 삼성전자우 종목 500분동안 자동매매 중단 (0: 중단, 1: 거래재개)
+{
+	"securityCheck": null,
+	"updateInfo": {
+		"updatedStock":[],
+		"deletedStock":[]
+	},
+	"tradeInfo": {
+		"삼성전자우": [0, 0, 0],
+		"LG화학": [0, 0, 0],
+		"셀트리온헬스케어": [0, 0, 0],
+		"하나전자": [0, 0, 0]
+	},
+	"algorithmInfo": {
+        "삼성전자우": [0, 500]
+	}
+}
+
+-> 지정한 시간 이후에 거래재개
+
+*/
