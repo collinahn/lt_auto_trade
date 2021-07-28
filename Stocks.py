@@ -1,14 +1,12 @@
 #-*- encoding: utf-8 -*-
 
-# 필요로 하는 항목들 클래스 호출 시 인스턴스 생성
-# 종목 코드가 같으면 기존에 있던 인스턴스 리턴
+# 종목 코드를 인자로 클래스 호출하고 그에 따른 인스턴스 생성
+# 이미 생성되어있는 종목코드를 실수로 다시 생성했을 때, 기존에 있던 인스턴스 리턴
 
 # 2021.07.27 created by taeyoung
 
 # m: 클래스 멤버 변수
 # i : 인스턴스 변수
-
-import time
 
 class Stock:
     __mn_TotalStock = 0         #인스턴스 생성 카운트하기 위한 클래스 변수
@@ -85,7 +83,6 @@ cls_stock43 = Stock(2199)
 cls_stock44 = Stock(2199)
 cls_stock45 = Stock(2199)
 cls_stock46 = Stock(2199)
-cls_stock47 = Stock(2199)
 # print(cls_stock4.getNumberTicker())
 # cls_stock5 = Stock(2199)
 # print(cls_stock5.getNumberTicker())
@@ -94,17 +91,14 @@ print(cls_stock1.getSetActiveStocks())
 print(cls_stock2.getNumberActiveStock())
 
 del(cls_stock1)
-del(cls_stock47)
 # del(cls_stock4)
 # del(cls_stock5)
  
 print(cls_stock3.getNumberActiveStock())
 
-time.sleep(1)
 
 del(cls_stock4)
 
-time.sleep(1)
 
 del(cls_stock41)
 print(cls_stock46.getNumberActiveStock())
@@ -117,7 +111,6 @@ print(cls_stock46.getNumberActiveStock())
 del(cls_stock45)
 del(cls_stock46)
 
-time.sleep(1)
 
 
 
