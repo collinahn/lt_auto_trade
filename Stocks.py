@@ -8,7 +8,7 @@
 # m: 클래스 멤버 변수
 # i : 인스턴스 변수
 
-class Stock:
+class Stock(object):
     __mn_TotalStock = 0         #인스턴스 생성 카운트하기 위한 클래스 변수
     __mset_Stocks = set()       #매개변수로 들어온 값들 저장하기 위한 set 클래스 변수
     __mdict_Obj = {}            #생성된 인스턴스들 저장하기 위한 dict 클래스 변수 { nTick:_instance }
@@ -34,7 +34,7 @@ class Stock:
             self.__in_Ticker = args[0]
             #나중에 완성된 api 클래스로 여기서 초기화
             self.__is_StockName = ""
-            self.__in_StockValue = 0
+            self.__in_StockCurrentValue = 0
             self.__in_StockTradeVolume = 0
             self.__if_StockFluncDay = 0.0
             self.__if_StockFluncHour = 0.0
@@ -44,7 +44,7 @@ class Stock:
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
 
-    #파이썬 gc 주기에 의해 바로 반영이 안 될수도 있음
+    #파이썬 gc 주기에 의해 즉시 반영이 안 될수도 있음
     def __del__(self):
         Stock.__mn_TotalStock -= 1
         Stock.__mdict_ObjCalled[self.__in_Ticker] = False
@@ -52,13 +52,25 @@ class Stock:
         # if Stock.__mdict_ObjCalled[self.__in_Ticker] == 1:
             # Stock.__mn_TotalStock -= 1
 
-    def getNumberTicker(self):
+    def getTicker(self) -> int:
         return self.__in_Ticker
 
-    def getNumberActiveStock(self):
+    def updateCurrentValue(self, nCurrentValue: int):
+        try:
+            if nCurrentValue <= 0:
+                raise(ValueError)
+            else:
+                self.__in_StockCurrentValue = nCurrentValue
+        except ValueError as ve:
+            print(ve)
+
+    def getCurrentValue(self) -> int:
+        return self.__in_StockCurrentValue
+
+    def getActiveStock(self) -> int:
         return self.__mn_TotalStock
 
-    def getSetActiveStocks(self):
+    def getActiveStocks(self) -> set:
         return self.__mset_Stocks
 
 
@@ -67,50 +79,4 @@ class Stock:
 
 
 
-
 # __self__ 
-#2199번 종목 인스턴스 생성
-cls_stock1 = Stock(2199)
-# print(cls_stock1.getNumberTicker())
-cls_stock2 = Stock(1002)
-# print(cls_stock2.getNumberTicker())
-cls_stock3 = Stock(2100)
-# print(cls_stock3.getNumberTicker())
-cls_stock4 = Stock(2199)
-cls_stock41 = Stock(2199)
-cls_stock42 = Stock(2199)
-cls_stock43 = Stock(2199)
-cls_stock44 = Stock(2199)
-cls_stock45 = Stock(2199)
-cls_stock46 = Stock(2199)
-# print(cls_stock4.getNumberTicker())
-# cls_stock5 = Stock(2199)
-# print(cls_stock5.getNumberTicker())
-
-print(cls_stock1.getSetActiveStocks())
-print(cls_stock2.getNumberActiveStock())
-
-del(cls_stock1)
-# del(cls_stock4)
-# del(cls_stock5)
- 
-print(cls_stock3.getNumberActiveStock())
-
-
-del(cls_stock4)
-
-
-del(cls_stock41)
-print(cls_stock46.getNumberActiveStock())
-del(cls_stock42)
-print(cls_stock46.getNumberActiveStock())
-del(cls_stock43)
-print(cls_stock46.getNumberActiveStock())
-del(cls_stock44)
-print(cls_stock46.getNumberActiveStock()) 
-del(cls_stock45)
-del(cls_stock46)
-
-
-
-
