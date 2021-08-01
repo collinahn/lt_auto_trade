@@ -9,9 +9,10 @@
 # m: 클래스 멤버 변수
 # i : 인스턴스 변수
 
+from typing import Dict, List
 from Stocks import Stock as st
 
-class SharedMem:
+class SharedMem(object):
     __mdict_MstObject = {}
 
     def __new__(cls, *args, **kwargs):
@@ -38,6 +39,25 @@ class SharedMem:
         del(self.__mdict_MstObject[nKey])
         del(st(nKey))
 
+    #종목을 보유 중인지 확인한다
+    def checkPossess(self, nKey: int) -> bool:
+        return nKey in self.__mdict_MstObject
+
+    #보유중인 종목의 수를 int로 반환한다.
+    def getCurrentPossess(self) -> int:
+        return len(self.__mdict_MstObject)
+
+    #보유중인 종목의 코드들을 dict_keys 형태로 반환한다. 
+    def getCurrentTicks(self):
+        return self.__mdict_MstObject.keys()
+
+    #보유중인 종목의 현재값들을 Dict로 반환한다
+    def getCurrentValueAll(self) -> Dict:
+        dict_StockValues = {}
+        for key, value in self.__mdict_MstObject.items():
+            dict_StockValues[key] = value.getCurrentValue()
+        return dict_StockValues
+
     #타 스레드에서 주기적으로 호출 1
     def updateCurrentStockValue(self):
         for obj_Target in self.__mdict_MstObject.values():
@@ -46,7 +66,7 @@ class SharedMem:
             pass
         
     #타 스레드에서 주기적으로 호출 2
-    def updateCurrentStockQuantity(self):
+    def updateCurrentStockVolume(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedValue = WrapperClass.WrapperMethod()   #매수 : + / 매도 : -
             # obj_Target.updateCurrentVolume(updatedValue)
