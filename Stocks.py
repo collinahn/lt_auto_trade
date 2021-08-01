@@ -65,7 +65,7 @@ class Stock(object):
             if str(type(nCurrentValue)) != "<class 'int'>":
                 raise(TypeError)
 
-            if nCurrentValue <= 0:
+            if nCurrentValue <= 100:
                 raise(ValueError)
             
             self.__in_StockCurrentValue = nCurrentValue
@@ -144,7 +144,7 @@ class StockValuesQueue:
     def isFull(self) -> bool:
         n_NextTailPointIdx = (self.__in_TailPointIdx +1) % self.__in_QueueSize
 
-        return n_NextTailPointIdx == self.__in_HeadPointIdx             # 테일+1 == 헤드 => 버퍼 
+        return n_NextTailPointIdx == self.__in_HeadPointIdx             # 테일+1 == 헤드 => 버퍼 full
 
 
 
