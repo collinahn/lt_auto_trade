@@ -71,6 +71,13 @@ class SharedMem(object):
             # updatedValue = WrapperClass.WrapperMethod()   #매수 : + / 매도 : -
             # obj_Target.updateCurrentVolume(updatedValue)
             pass
+
+    #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 호출 3
+    def updateTotalStockTradeVolume(self):
+        for obj_Target in self.__mdict_MstObject.values():
+            # updatedValue = WrapperClass.WrapperMethod()
+            # obj_Target.updateCurrentValue(updatedValue)
+            pass 
     
 
 # __selfExe__
