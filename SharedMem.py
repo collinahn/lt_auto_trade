@@ -31,60 +31,60 @@ class SharedMem(object):
         print(self.__mdict_MstObject)
 
     #key 값 = 종목코드
-    def addSharedMem(self, nKey: int) -> None:
+    def add_sharedmem(self, nKey: int) -> None:
         self.__mdict_MstObject[nKey] = st(nKey)
 
     #db에 반영하는 함수 또한 호출되어야 한다.
-    def delSharedMem(self, nKey: int) -> None:
+    def del_sharedmem(self, nKey: int) -> None:
         del(self.__mdict_MstObject[nKey])
-        del(st(nKey))
 
     #종목을 보유 중인지 확인한다
-    def checkPossess(self, nKey: int) -> bool:
+    def check_possess(self, nKey: int) -> bool:
         return nKey in self.__mdict_MstObject
 
     #보유중인 종목의 수를 int로 반환한다.
-    def getCurrentPossess(self) -> int:
+    def get_current_possess(self) -> int:
         return len(self.__mdict_MstObject)
 
     #보유중인 종목의 코드들을 dict_keys 형태로 반환한다. 
-    def getCurrentTicks(self):
+    def get_current_ticks(self):
         return self.__mdict_MstObject.keys()
 
     #보유중인 종목의 현재값들을 Dict로 반환한다
-    def getCurrentValueAll(self) -> Dict:
+    def get_current_value_all(self) -> Dict:
         dict_StockValues = {}
         for key, value in self.__mdict_MstObject.items():
-            dict_StockValues[key] = value.getCurrentValue()
+            dict_StockValues[key] = value.get_current_value()
         return dict_StockValues
 
     #타 스레드에서 주기적으로 호출 1
-    def updateCurrentStockValue(self):
+    def update_current_stock_value(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedValue = WrapperClass.WrapperMethod()
-            # obj_Target.updateCurrentValue(updatedValue)
+            # obj_Target.update_current_value(updatedValue)
             pass
         
     #타 스레드에서 주기적으로 호출 2
-    def updateCurrentStockVolume(self):
+    # 거래량의 경우 신뢰도를 위해 api쪽에서 받아온 데이터와 자체적으로 갖고있는 데이터를 비교 후 업데이트해야한다.
+    def update_current_stock_volume(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedValue = WrapperClass.WrapperMethod()   #매수 : + / 매도 : -
-            # obj_Target.updateCurrentVolume(updatedValue)
+            # obj_Target.update_current_volume(updatedValue)
             pass
 
     #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 호출 3
-    def updateTotalStockTradeVolume(self):
+    def update_total_stock_trade_volume(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedValue = WrapperClass.WrapperMethod()
-            # obj_Target.updateCurrentValue(updatedValue)
+            # obj_Target.update_current_trade_volume(updatedVolume)
             pass 
     
 
 # __selfExe__
 a = SharedMem()
-a.addSharedMem(1159, st(1159))
-a.addSharedMem(1160, st(1160))
-a.addSharedMem(1159, st(1159))
+a.add_sharedmem(1159, st(1159))
+a.add_sharedmem(1160, st(1160))
+a.add_sharedmem(1159, st(1159))
 
 a.printSharedMem()
 

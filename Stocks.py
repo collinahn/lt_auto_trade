@@ -60,11 +60,12 @@ class Stock(object):
         Stock.__mn_TotalStock -= 1
         Stock.__mdict_ObjCalled[self.__in_Ticker] = False
         del(Stock.__mdict_Obj[self.__in_Ticker]) #제거되고 나면 새로운 인스턴스 생성
+        print("[deleted] class ID:", Stock.__in_Ticker)
 
-    def getTicker(self) -> int:
+    def get_ticker(self) -> int:
         return self.__in_Ticker
 
-    def updateCurrentValue(self, nCurrentValue: int) -> None:
+    def update_current_value(self, nCurrentValue: int) -> None:
         try:
             if str(type(nCurrentValue)) != "<class 'int'>":
                 raise(TypeError)
@@ -80,7 +81,7 @@ class Stock(object):
         except TypeError as te:
             print("class Stock func updateCurrentValue : TypeError", te)
 
-    def updateCurrentVolume(self, nUpdatedVolume: int) -> None:
+    def update_current_volume(self, nUpdatedVolume: int) -> None:
         try:
             self.__in_StockVolume += nUpdatedVolume
             if self.__in_StockVolume < 0:
@@ -88,23 +89,23 @@ class Stock(object):
         except ValueError as ve:
             print("class Stock func updateCurrentVolume : ValueError", ve)
 
-    def updateTotalTradeVolume(self, nTradeVolume: int) -> None:
+    def update_total_trade_volume(self, nTradeVolume: int) -> None:
         self.__iq_TotalTradeVolume.pushQueue(nTradeVolume)
         self.__iq_TotalTradeVolume.pullQueue()  #10일간의 데이터를 저장해두기 위해서 테일포인트를 옮기는 순간 헤드포인트도 옮긴다
 
     #큐의 시작 인덱스와 큐에 해당하는 리스트를 반환
-    def getTradeVolumeQueue(self) -> tuple: 
+    def get_trade_volume_queue(self) -> tuple: 
         if self.__iq_TotalTradeVolume.__in_TailPointIdx == 0:
             return const.STOCK_TRADING_VOLUME_QUEUE_SIZE - 1, self.__iq_TotalTradeVolume.__iq_Queue
         return self.__iq_TotalTradeVolume.__in_TailPointIdx - 1, self.__iq_TotalTradeVolume.__iq_Queue
 
-    def getCurrentValue(self) -> int:
+    def get_current_value(self) -> int:
         return self.__in_StockCurrentValue
 
-    def getActiveStock(self) -> int:
+    def get_active_stock(self) -> int:
         return self.__mn_TotalStock
 
-    def getActiveStocks(self) -> set:
+    def get_active_stocks(self) -> set:
         return self.__mset_Stocks
 
 
