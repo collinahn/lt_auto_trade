@@ -25,9 +25,9 @@ class SharedMem(object):
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
-            print("Construct of SharedMem")
+            print("Construct of SharedMem", self._instance)
     
-    def __printSharedMem(self):
+    def __print_shared_mem(self):
         print(self.__mdict_MstObject)
 
     #key 값 = 종목코드
@@ -80,11 +80,4 @@ class SharedMem(object):
             pass 
     
 
-# __selfExe__
-a = SharedMem()
-a.add_sharedmem(1159, st(1159))
-a.add_sharedmem(1160, st(1160))
-a.add_sharedmem(1159, st(1159))
-
-a.printSharedMem()
 
