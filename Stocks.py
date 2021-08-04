@@ -57,10 +57,10 @@ class Stock(object):
 
     #파이썬 gc 주기에 의해 즉시 반영이 안 될수도 있음
     def __del__(self):
+        print("[delete] class ID:", Stock.__in_Ticker)
         Stock.__mn_TotalStock -= 1
         Stock.__mdict_ObjCalled[self.__in_Ticker] = False
         del(Stock.__mdict_Obj[self.__in_Ticker]) #제거되고 나면 새로운 인스턴스 생성
-        print("[deleted] class ID:", Stock.__in_Ticker)
 
     def get_ticker(self) -> int:
         return self.__in_Ticker
