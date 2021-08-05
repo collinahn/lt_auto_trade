@@ -42,12 +42,13 @@ class Stock(object):
             self.__is_StockName = ""
             self.__in_StockCurrentValue = 0
             self.__iq_StockValues = StockQueue(const.STOCK_VALUE_QUEUE_SIZE) #주가 저장
-            self.__in_StockVolume = 0
+            self.__in_StockQuantity = 0
             self.__iq_TotalTradeVolume = StockQueue(const.STOCK_TRADING_VOLUME_QUEUE_SIZE)
             self.__if_StockFluncDay = 0.0
             self.__if_StockFluncHour = 0.0
             self.__if_StockFlunc30Min = 0.0
             self.__if_StockFlunc5Min = 0.0
+            self.__is_LastUpdated = ""
 
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
@@ -65,6 +66,26 @@ class Stock(object):
     def get_ticker(self) -> int:
         return self.__in_Ticker
 
+    def get_name(self) -> str:
+        return self.__in_StockName
+
+    def get_quantity(self) -> int:
+        return self.__in_StockQuantity
+
+    def get_current_value(self) -> int:
+        return self.__in_StockCurrentValue
+
+    def get_updated_time(self) -> str:
+        return self.__in_LastUpdated
+
+    def get_active_stock(self) -> int:
+        return self.__mn_TotalStock
+
+    def get_active_stocks(self) -> set:
+        return self.__mset_Stocks
+
+
+
     def update_current_value(self, nCurrentValue: int) -> None:
         try:
             if str(type(nCurrentValue)) != "<class 'int'>":
@@ -81,14 +102,16 @@ class Stock(object):
         except TypeError as te:
             print("class Stock func updateCurrentValue : TypeError", te)
 
+    #현재 보유수량을 업데이트한다.
     def update_current_volume(self, nUpdatedVolume: int) -> None:
         try:
-            self.__in_StockVolume += nUpdatedVolume
-            if self.__in_StockVolume < 0:
+            self.__in_StockQuantity += nUpdatedVolume
+            if self.__in_StockQuantity < 0:
                 raise(ValueError)
         except ValueError as ve:
             print("class Stock func updateCurrentVolume : ValueError", ve)
 
+    #하루 단위 거래량을 큐에 저장한다.
     def update_total_trade_volume(self, nTradeVolume: int) -> None:
         self.__iq_TotalTradeVolume.pushQueue(nTradeVolume)
         self.__iq_TotalTradeVolume.pullQueue()  #10일간의 데이터를 저장해두기 위해서 테일포인트를 옮기는 순간 헤드포인트도 옮긴다
@@ -99,16 +122,10 @@ class Stock(object):
             return const.STOCK_TRADING_VOLUME_QUEUE_SIZE - 1, self.__iq_TotalTradeVolume.__iq_Queue
         return self.__iq_TotalTradeVolume.__in_TailPointIdx - 1, self.__iq_TotalTradeVolume.__iq_Queue
 
-    def get_current_value(self) -> int:
-        return self.__in_StockCurrentValue
-
-    def get_active_stock(self) -> int:
-        return self.__mn_TotalStock
-
-    def get_active_stocks(self) -> set:
-        return self.__mset_Stocks
-
-
+    #api가 주는 데이터로 업데이트를 마치고 꼭 호출해야하는 함수
+    #SharedMem.py에서 구현한다.
+    def update_updated_time(self, sNowTime):
+        self.__is_LastUpdated = sNowTime
 
 
 class StockQueue:

@@ -42,6 +42,10 @@ class SharedMem(object):
     def check_possess(self, nKey: int) -> bool:
         return nKey in self.__mdict_MstObject
 
+    #인스턴스를 반환한다.
+    def get_instance(self, nKey: int) -> object:
+        return self.__mdict_MstObject[nKey]
+
     #보유중인 종목의 수를 int로 반환한다.
     def get_current_possess(self) -> int:
         return len(self.__mdict_MstObject)
