@@ -4,6 +4,12 @@
 # 상수는 Const.py로 가고 업데이트 될 때마다 커밋하고, 
 # 이 파일은 각자 pull해서 각자 정보를 입력한 뒤 .gitignore에 본 파일명을 저장하세요
 # 다른 소스에선 import 해서 변수단위로 사용
+
+#다음과 같은 명령어를 사용해 추적을 중지한다.
+'''
+$ git update-index --assume-unchanged config.py
+'''
+
 # 예시
 
 '''
