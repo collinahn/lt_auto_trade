@@ -44,14 +44,15 @@ class Stock(object):
             self.__iq_StockValues = StockQueue(const.STOCK_VALUE_QUEUE_SIZE) #주가 저장
             self.__in_StockQuantity = 0
             self.__iq_TotalTradeVolume = StockQueue(const.STOCK_TRADING_VOLUME_QUEUE_SIZE)
-            self.__if_StockFluncDay = 0.0
-            self.__if_StockFluncHour = 0.0
-            self.__if_StockFlunc30Min = 0.0
-            self.__if_StockFlunc5Min = 0.0
+            # self.__if_StockFluncDay = 0.0
+            # self.__if_StockFluncHour = 0.0
+            # self.__if_StockFlunc30Min = 0.0
+            # self.__if_StockFlunc5Min = 0.0
             self.__is_LastUpdated = ""
 
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
+            print("Constructor of Stock", args[0])
     
     def __hash__(self, *args):
         return hash((self.args[0]))
@@ -76,7 +77,7 @@ class Stock(object):
         return self.__in_StockCurrentValue
 
     def get_updated_time(self) -> str:
-        return self.__in_LastUpdated
+        return self.__is_LastUpdated
 
     def get_active_stock(self) -> int:
         return self.__mn_TotalStock

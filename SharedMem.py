@@ -10,6 +10,7 @@
 # i : 인스턴스 변수
 
 from typing import Dict, List
+from datetime import datetime
 from Stocks import Stock as st
 
 class SharedMem(object):
@@ -82,6 +83,19 @@ class SharedMem(object):
             # updatedValue = WrapperClass.WrapperMethod()
             # obj_Target.update_current_trade_volume(updatedVolume)
             pass 
-    
 
+    #마지막 업데이트 시각 갱신
+    def update_last_updated(self):
+        s_NowTime=str(datetime.now())
+
+        for obj_Target in self.__mdict_MstObject.values():
+            obj_Target.update_updated_time(s_NowTime)
+
+
+    #다른 스레드에서 이거 하나만 호출해도 된다.
+    def update_all(self):
+        self.update_current_stock_value()
+        self.update_current_stock_volume()
+        self.update_total_stock_trade_volume()
+        self.update_last_updated()
 

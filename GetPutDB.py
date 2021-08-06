@@ -4,7 +4,10 @@
 # 나중에 mariaDB나 mySQL로 scale up 해서 이 파일만 교체해도 될듯
 #
 # 2021.08.04 created by taeyoung
-#
+# 
+
+# 스레드 세이프?
+# --> sqlite3는 스레드세이프 하지만 멀티스레드에 적합하지는 않음(병렬 처리 불가)
 
 import sqlite3
 from datetime import datetime
