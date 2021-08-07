@@ -101,3 +101,23 @@ class GetPutDB(object):
             print('GetPutDb::UpdateTradeInfo >> exception occured:', e)
             return False
         return True
+
+    # 거래내역 얻어오기
+    def get_history_by_id(self, nStockID: int, nNumberFetch: int):
+        try:
+            con = sqlite3.connect(self.__db_path)
+            con.row_factory = sqlite3.Row
+            curs = con.cursor()
+            query = """SELECT * \
+                FROM `tHistoryTransaction` \
+                WHERE `stockID`=? \
+                LIMIT ?"""
+            curs.execute(query, (nStockID, nNumberFetch))
+            rows = curs.fetchall()
+            
+            con.commit()
+            con.close()
+        except Exception as e:
+            print('GetPutDb::GetHistoryByID >> exception occured:', e)
+            return None
+        return rows
