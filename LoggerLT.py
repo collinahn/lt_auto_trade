@@ -57,8 +57,8 @@ class Logger:
             cls.__logger.addHandler(cls.streamHandler)
 
             #콘솔엔 전부 출력하고 파일엔 warning 이상부터 기록
-            # cls.fileHandler.setLevel(logging.WARNING)
-            # cls.streamHandler.setLevel(logging.DEBUG)
+            cls.fileHandler.setLevel(logging.WARNING)
+            cls.streamHandler.setLevel(logging.DEBUG)
             
             print("Constructor of Logger")
   
@@ -72,7 +72,7 @@ class Logger:
         cls.__logger.info(message)
 
     @classmethod
-    def WARN(cls, message):
+    def WARNING(cls, message):
         cls.__logger.warning(message)
 
     @classmethod
