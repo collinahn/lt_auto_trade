@@ -1,0 +1,1 @@
+2021-08-08 04:39:47,524 [LoggerLT.py:WARN:76] [WARNING] >> msg
