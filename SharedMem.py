@@ -17,7 +17,7 @@ from LoggerLT import Logger
 
 class SharedMem(object):
     __mdict_MstObject = {}
-    
+
     log = Logger()
 
     def __new__(cls, *args, **kwargs):
@@ -38,10 +38,13 @@ class SharedMem(object):
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
         self.__mdict_MstObject[nKey] = st(nKey)
+        self.log.INFO("New Stock Added: " + str(nKey))
 
     #db에 반영하는 함수 또한 호출되어야 한다.
     def delete(self, nKey: int) -> None:
         del(self.__mdict_MstObject[nKey])
+        self.log.INFO("Stock Deleted: " + str(nKey))
+
 
     #종목을 보유 중인지 확인한다
     def check_possess(self, nKey: int) -> bool:
@@ -73,30 +76,37 @@ class SharedMem(object):
     def update_current_stock_price(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedPrice = WrapperClass.WrapperMethod()
-            # obj_Target.price(updatedPrice)
+            # obj_Target.price = updatedPrice
             pass
+        self.log.INFO("Shared Memory Updated: Price")
         
     #타 스레드에서 주기적으로 호출 2
     # 거래량의 경우 신뢰도를 위해 api쪽에서 받아온 데이터와 자체적으로 갖고있는 데이터를 비교 후 업데이트해야한다.
     def update_current_stock_quantity(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedQuantity = WrapperClass.WrapperMethod()   #매수 : + / 매도 : -
-            # obj_Target.quantity(updatedQuantity)
+            # obj_Target.quantity = updatedQuantity
             pass
+        self.log.INFO("Shared Memory Updated: Quantity")
+
 
     #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 호출 3
     def update_total_stock_trade_volume(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedVolume = WrapperClass.WrapperMethod()
-            # obj_Target.stock_volume_q(updatedVolume)
+            # obj_Target.stock_volume_q = updatedVolume
             pass 
+        self.log.INFO("Shared Memory Updated: Total Trade Volume(should be presented once a day)")
+
 
     #마지막 업데이트 시각 갱신
     def update_last_updated(self):
         s_NowTime=str(datetime.now())
 
         for obj_Target in self.__mdict_MstObject.values():
-            obj_Target.updated_time(s_NowTime)
+            obj_Target.updated_time = s_NowTime
+
+        self.log.INFO("Shared Memory Updated: Updated Time")
 
 
     #다른 스레드에서 이거 하나만 호출해도 된다.

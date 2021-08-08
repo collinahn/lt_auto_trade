@@ -20,10 +20,8 @@ class Stock(object):
     __mdict_Obj = {}            #생성된 인스턴스들 저장하기 위한 dict 클래스 변수 { nTick:_instance }
     __mdict_ObjCalled = {}      #각 인스턴스들 호출 내역 저장하기 위한 dict 클래스 변수 { nTick:True }
                                 #value가 true : 현재 보유중 false : 현재보유중 아님. key가 없을 땐 보유했던 적 없음
-
     log = Logger()
-
-
+    
     #생성자가 이미 생성된 종목의 인스턴스인지 판단하고 그에 따라 중복 없이 인스턴스 할당
     def __new__(cls, *args):
         if not hasattr(cls, "_instance"):
@@ -64,7 +62,7 @@ class Stock(object):
 
     #파이썬 gc 주기에 의해 즉시 반영이 안 될수도 있음
     def __del__(self):
-        print("Delete object instance ID:", self.__in_Ticker)
+        print("Delete Stock ", self.__in_Ticker)
         Stock.__mn_TotalStock -= 1
         Stock.__mdict_ObjCalled[self.__in_Ticker] = False
         del(Stock.__mdict_Obj[self.__in_Ticker]) #제거되고 나면 새로운 인스턴스 생성
@@ -107,13 +105,16 @@ class Stock(object):
 
     #현재 보유수량을 업데이트한다.
     @quantity.setter
-    def quantity(self, nUpdatedVolume: int) -> None:
+    def quantity(self, nUpdatedQuantity) -> None:
         try:
-            self.__in_StockQuantity += nUpdatedVolume
-            if self.__in_StockQuantity < 0:
+            if self.__in_StockQuantity + nUpdatedQuantity < 0:
                 raise(ValueError)
+
+            self.__in_StockQuantity += nUpdatedQuantity
+            self.log.INFO("Stock ID:" + str(self.__in_Ticker) + ", " + \
+                "Updated Quanity:" + str(self.__in_StockQuantity))
         except ValueError as ve:
-            print("class Stock func updateCurrentVolume : ValueError", ve)
+            self.log.ERROR("ValueError: " + str(ve))
 
     #현재 가격을 업데이트한다.
     @price.setter
@@ -127,17 +128,21 @@ class Stock(object):
             
             self.__in_StockCurrentPrice = nCurrentPrice
             self.__iq_StockValues.pushQueue(nCurrentPrice)  # 큐에 저장
+            
+            self.log.INFO("Price Updated and Enqueued: " + str(nCurrentPrice))
 
         except ValueError as ve:
-            print("class Stock func updateCurrentValue : ValueError", ve)
+            self.log.ERROR("ValueError: " + str(ve))
         except TypeError as te:
-            print("class Stock func updateCurrentValue : TypeError", te)
+            self.log.ERROR("TypeError: " + str(te))
 
     #하루 단위 거래량을 큐에 저장한다.
     @stock_volume_q.setter
     def stock_volume_q(self, nTradeVolume: int) -> None:
         self.__iq_TotalTradeVolume.pushQueue(nTradeVolume)
         self.__iq_TotalTradeVolume.pullQueue()  #10일간의 데이터를 저장해두기 위해서 테일포인트를 옮기는 순간 헤드포인트도 옮긴다
+        
+        self.log.INFO("Total Stock Volume Updated and Enqueued: " + str(nTradeVolume))
 
     #api가 주는 데이터로 업데이트를 마치고 꼭 호출 필요
     #SharedMem.py에서 구현한다.
@@ -200,3 +205,9 @@ class StockQueue:
 
 
 # __self__ 
+# a = Stock(12)
+# print(a.quantity)
+# a.quantity = 1
+# print(a.quantity)
+# a.quantity = -1
+# print(a.quantity)
