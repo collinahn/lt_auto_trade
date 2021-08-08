@@ -45,7 +45,6 @@ class SharedMem(object):
         del(self.__mdict_MstObject[nKey])
         self.log.INFO("Stock Deleted: " + str(nKey))
 
-
     #종목을 보유 중인지 확인한다
     def check_possess(self, nKey: int) -> bool:
         return nKey in self.__mdict_MstObject
@@ -71,6 +70,15 @@ class SharedMem(object):
         for key, value in self.__mdict_MstObject.items():
             dict_StockValues[key] = value.price
         return dict_StockValues
+
+    #DB에 저장하기 위한 정보들을 리스트 in 튜플형태로 반환한다.
+    def get_info4sql(self) -> List:
+        list_Ret = []
+        for key, value in self.__mdict_MstObject.items():
+            tuple_Ret = (value.name, value.quantity, value.price, value.updated_time, key)
+            list_Ret.append(tuple_Ret)
+        
+        return list_Ret
 
     #타 스레드에서 주기적으로 호출 1
     def update_current_stock_price(self):

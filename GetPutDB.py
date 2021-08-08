@@ -6,15 +6,14 @@
 # 2021.08.04 created by taeyoung
 # 
 
-# 스레드 세이프?
-# --> sqlite3는 스레드세이프 하지만 멀티스레드에 적합하지는 않음(병렬 처리 불가)
-
 import sqlite3
 from datetime import datetime
 import constantsLT as const
 from SharedMem import SharedMem
+from LoggerLT import Logger
 
 class GetPutDB(object):
+    log = Logger()
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
@@ -31,14 +30,14 @@ class GetPutDB(object):
             print("Construct of GetPutDb")
 
     #메인 메모리 요소들을 DB에 저장
-    #아직 테이블 및 칼럼 구조를 구상하는 중
-    #만약 한 번에 한 주씩 업데이트 하지 않고 보유한 인스턴스들에 대한 DB업데이트를 한 번에 한다면?(우선순위 상)
-    def update_stock_properties(self, nStockID) -> bool:
+    #만약 한 번에 한 주씩 업데이트 하지 않고 보유한 인스턴스들에 대한 DB업데이트를 한 번에 한다면?
+    #deprecated
+    def update_property(self, nStockID) -> bool:
         obj_Instance = self.__shared_mem.get_instance(nStockID)
-        s_Name = obj_Instance.get_name()
-        n_Quantity = obj_Instance.get_quantity()
-        n_Value = obj_Instance.get_current_value()
-        s_Time = obj_Instance.get_updated_time()
+        s_Name = obj_Instance.name
+        n_Quantity = obj_Instance.quantity
+        n_Value = obj_Instance.price
+        s_Time = obj_Instance.updated_time
 
         try:
             con = sqlite3.connect(self.__db_path)
@@ -59,6 +58,33 @@ class GetPutDB(object):
             print('GetPutDb::UpdateStockProperties >> exception occured:', e)
             return False
         return True
+
+    #공유메모리에 존재하는 데이터들을 한 번에 업데이트한다.
+    #2021.08.08 추가, 아직 테스트 못함
+    def update_properties(self) -> bool:
+        list_Info4Execute = self.__shared_mem.get_info4sql()
+
+        try:
+            con = sqlite3.connect(self.__db_path)
+            con.row_factory = sqlite3.Row
+            curs = con.cursor()
+            #stockName은 최적화시 빼도된다
+            query = """UPDATE tStockProperties SET 
+                `stockName`=?,
+                `stockCurrentPossess`=?, 
+                `stockCurrentValue`=?, 
+                `timeLastUpdate`=?
+                WHERE `stockID`=?;"""
+            curs.executemany(query, list_Info4Execute)
+
+            con.commit()
+            con.close()
+        except Exception as e:
+            print('GetPutDb::UpdateStockProperties >> exception occured:', e)
+            return False
+        return True
+
+
 
     # 사용자가 사용하는 주식인지 여부를 업데이트한다 ("T" 트래킹 중, "N" 트래킹 안함)
     def update_stock_tracking_info(self, nStockID: int, bUsed=False) -> bool:
