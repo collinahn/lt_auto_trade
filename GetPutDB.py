@@ -55,7 +55,7 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            print('GetPutDb::UpdateStockProperties >> exception occured:', e)
+            self.log.ERROR("Exception Occured, " + str(e))
             return False
         return True
 
@@ -79,8 +79,10 @@ class GetPutDB(object):
 
             con.commit()
             con.close()
+            
+            self.log.INFO("Updated " + str(len(list_Info4Execute)) + " Fields")
         except Exception as e:
-            print('GetPutDb::UpdateStockProperties >> exception occured:', e)
+            self.log.ERROR("Exception Occured, " + str(e))
             return False
         return True
 
@@ -103,12 +105,11 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            print('GetPutDb::UpdateStockTrackingInfo >> exception occured:', e)
+            self.log.ERROR("Exception Occured, " + str(e))
             return False
         return True
 
     # 거래 정보 업데이트
-    # 이 역시 거래가 한번에 여러번 되었다면 한번에 바인딩할 수 있도록 최적화(사실 그럴 경우는 드무니까 우선순위 하)
     # tStockProperties가 업데이트 될 때 trigger로 기록되도록 하는 것도 나쁘지 않음
     # nQuantity: + 사자 - 팔자
     def insert_transaction_hist(self, nStockID: int, nQuantity: int, nPrice: int) -> bool:
@@ -124,7 +125,7 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            print('GetPutDb::UpdateTradeInfo >> exception occured:', e)
+            self.log.ERROR("Exception Occured, " + str(e))
             return False
         return True
 
@@ -144,6 +145,6 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            print('GetPutDb::GetHistoryByID >> exception occured:', e)
+            self.log.ERROR("Exception Occured, " + str(e))
             return None
         return rows
