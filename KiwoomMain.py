@@ -12,7 +12,7 @@
 import sys
 from KiwoomAPI import KiwoomAPI
 from PyQt5.QtWidgets import *
-from Config import *
+from TR_Code import *
 
 class KiwoomMain:
     def __init__(self):
