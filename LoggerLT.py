@@ -1,6 +1,7 @@
 # 로그를 설정하고 생성하는 클래스(싱글턴)
 # 로그를 기록할 사안들은 이 인스턴스로 기록한다
-# 모듈 파일명, 함수명, 등의 정볼를 포함하여 로그를 출력한다.
+# 모듈 파일명, 함수명, 등의 정보를 포함하여 로그를 출력한다.
+# 함수명 등의 디버그 정보는 Python3.8 이상에서 동작한다.
 
 # 사용법
 # 로그를 레벨별로 세분화한다.
@@ -65,20 +66,20 @@ class Logger:
 
     @classmethod
     def DEBUG(cls, message):
-        cls.__logger.debug(message)
+        cls.__logger.debug(message, stacklevel=2)
 
     @classmethod
     def INFO(cls, message):
-        cls.__logger.info(message)
+        cls.__logger.info(message, stacklevel=2)
 
     @classmethod
     def WARNING(cls, message):
-        cls.__logger.warning(message)
+        cls.__logger.warning(message, stacklevel=2)
 
     @classmethod
     def ERROR(cls, message):
-        cls.__logger.error(message)
+        cls.__logger.error(message, stacklevel=2)
 
     @classmethod
     def CRITICAL(cls, message):
-        cls.__logger.critical(message)
+        cls.__logger.critical(message, stacklevel=2)
