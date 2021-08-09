@@ -5,6 +5,7 @@
 
 ## wriiten by: Jiuk Jang 
 # 2021-08-08 키움 로그인, 조회와 실시간 데이터 처리 관련 APi정리 완료
+# 2021-08-09 체결정보, 잔고처리, 주문 관련 API (미완)
 
 ## written by: ChanHyuk Jun
 
@@ -40,6 +41,9 @@ class KiwoomAPI(QAxWidget):
         self.OnReceiveTrData.connect(self.E_OnReceiveTrData) 
         self.OnReceiveRealData.connect(self.E_OnReceiveRealData)
 
+        # 체결정보 / 잔고정보 처리
+        self.OnReceiveChejanData.connect(self.E_OnReceiveChejanData)
+
     def E_OnReceiveMsg(self, sScrNo, sRQName, sTrCode, sMsg):
         print(sScrNo, sRQName, sTrCode, sMsg)
 
@@ -63,7 +67,17 @@ class KiwoomAPI(QAxWidget):
         self.event_loop_CommRqData.exit()    
 
     def E_OnReceiveRealData(self, sCode, sRealType, sRealData):
-        print(sCode, sRealType, sRealData)
+        # print(sCode, sRealType, sRealData)
+        pass
+    
+    # 체결정보 / 잔고정보 처리
+    def E_OnReceiveChejanData(self, sGubun, nItemCnt, sFidList):
+        # sGubun = 0: 주문체결통보, 1:잔고통보, 3:특이신호
+        if sGubun == 0:
+            ilist_Chejan_data = [self.GetChejanData(9203), self.GetChejanData(900), self.GetChejanData(901)]
+    
+        # print(sGubun, nItemCnt, sFidList)
+        self.event_loop_SendOrder.exit()
 
 #-----------------# 
     ## OpenAPI 함수 ##
@@ -150,7 +164,27 @@ class KiwoomAPI(QAxWidget):
                 lst_temp_data_rq.append(dict_temp_data_rq)
             
             self.rq_data[strTrCode]['Data'] = lst_temp_data_rq
+    
+    # 체결잔고 데이터 반환
+    def GetChejanData(self, nFid):
+        ret = self.dynamicCall('GetChejanData(int)', nFid)
 
+        return ret
+    
+    # 주식 주문을 서버로 전송, 에러코드 반환
+    def SendOrder(self, sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo):
+        ret = self.dynamicCall('SendOrder(String, String, String, int, String, int, int, String, String)', sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo)
+        self.event_loop_SendOrder = QEventLoop()
+        self.event._loop_SendOrder.exec_()
+
+        # if ret != 0:
+        #     print("매수실패")
+        # else:
+        #     print("매수성공")
+
+        return ret
+        
+    
 
 
 
