@@ -31,7 +31,7 @@ class SharedMem(object):
             self.__il_Account_Info = list(args) # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
 
             self.log = Logger()
-            self.log.INFO(str(self._instance))
+            self.log.INFO(self._instance)
     
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
@@ -43,15 +43,15 @@ class SharedMem(object):
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
         self.__mdict_MstObject[nKey] = st(nKey)
-        self.log.INFO("New Stock Added: " + str(nKey))
+        self.log.INFO("New Stock Added:", nKey)
 
     #db에 반영하는 함수 또한 호출되어야 한다.
     def delete(self, nKey: int) -> None:
         try:
             del(self.__mdict_MstObject[nKey])
-            self.log.INFO("Stock Deleted: " + str(nKey))
+            self.log.INFO("Stock Deleted:", nKey)
         except KeyError as ke:
-            self.log.WARNING("Cannot Delete Stock " + str(nKey) + "KeyError: " + str(ke))
+            self.log.WARNING("Cannot Delete Stock", nKey, "KeyError:", ke)
 
     #종목을 보유 중인지 확인한다
     def check_possess(self, nKey: int) -> bool:

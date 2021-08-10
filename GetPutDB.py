@@ -27,7 +27,7 @@ class GetPutDB(object):
             self.__db_path = const.DB_PATH
             self.__shared_mem = SharedMem()
             self.log = Logger()
-            self.log.INFO(str(self._instance))
+            self.log.INFO(self._instance)
 
     #메인 메모리 요소들을 DB에 저장
     #만약 한 번에 한 주씩 업데이트 하지 않고 보유한 인스턴스들에 대한 DB업데이트를 한 번에 한다면?
@@ -55,7 +55,7 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured, " + str(e))
+            self.log.ERROR("Exception Occured,", e)
             return False
         return True
 
@@ -80,9 +80,9 @@ class GetPutDB(object):
             con.commit()
             con.close()
             
-            self.log.INFO("Updated " + str(len(list_Info4Execute)) + " Fields")
+            self.log.INFO("Updated", len(list_Info4Execute), "Fields")
         except Exception as e:
-            self.log.ERROR("Exception Occured, " + str(e))
+            self.log.ERROR("Exception Occured,", e)
             return False
         return True
 
@@ -105,7 +105,7 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured, " + str(e))
+            self.log.ERROR("Exception Occured,", e)
             return False
         return True
 
@@ -125,7 +125,7 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured, " + str(e))
+            self.log.ERROR("Exception Occured,", e)
             return False
         return True
 
@@ -145,6 +145,6 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured, " + str(e))
+            self.log.ERROR("Exception Occured,", e)
             return None
         return rows

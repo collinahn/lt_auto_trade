@@ -20,6 +20,7 @@ class Stock(object):
     __mdict_Obj = {}            #생성된 인스턴스들 저장하기 위한 dict 클래스 변수 { nTick:_instance }
     __mdict_ObjCalled = {}      #각 인스턴스들 호출 내역 저장하기 위한 dict 클래스 변수 { nTick:True }
                                 #value가 true : 현재 보유중 false : 현재보유중 아님. key가 없을 땐 보유했던 적 없음
+
     #생성자가 이미 생성된 종목의 인스턴스인지 판단하고 그에 따라 중복 없이 인스턴스 할당
     def __new__(cls, *args):
         if not hasattr(cls, "_instance"):
@@ -54,7 +55,7 @@ class Stock(object):
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
 
-            self.log.INFO("Stock " + str(args[0]) + " @" + str(self._instance))
+            self.log.INFO("Stock", args[0], "@"+str(self._instance))
     
     def __hash__(self, *args):
         return hash((self.args[0]))
@@ -110,10 +111,10 @@ class Stock(object):
                 raise(ValueError)
 
             self.__in_StockQuantity += nUpdatedQuantity
-            self.log.INFO("Stock ID:" + str(self.__in_Ticker) + ", " + \
-                "Updated Quanity:" + str(self.__in_StockQuantity))
+            self.log.INFO("Stock ID:", self.__in_Ticker, ",", \
+                "Updated Quanity:", self.__in_StockQuantity)
         except ValueError as ve:
-            self.log.ERROR("ValueError: " + str(ve))
+            self.log.ERROR("ValueError:", ve)
 
     #현재 가격을 업데이트한다.
     @price.setter
@@ -131,9 +132,9 @@ class Stock(object):
             self.log.INFO("Price Updated and Enqueued: " + str(nCurrentPrice))
 
         except ValueError as ve:
-            self.log.ERROR("ValueError: " + str(ve))
+            self.log.ERROR("ValueError:", ve)
         except TypeError as te:
-            self.log.ERROR("TypeError: " + str(te))
+            self.log.ERROR("TypeError:", te)
 
     #하루 단위 거래량을 큐에 저장한다.
     @stock_volume_q.setter
@@ -141,7 +142,7 @@ class Stock(object):
         self.__iq_TotalTradeVolume.pushQueue(nTradeVolume)
         self.__iq_TotalTradeVolume.pullQueue()  #10일간의 데이터를 저장해두기 위해서 테일포인트를 옮기는 순간 헤드포인트도 옮긴다
         
-        self.log.INFO("Total Stock Volume Updated and Enqueued: " + str(nTradeVolume))
+        self.log.INFO("Total Stock Volume Updated and Enqueued:", nTradeVolume)
 
     #api가 주는 데이터로 업데이트를 마치고 꼭 호출 필요
     #SharedMem.py에서 구현한다.
