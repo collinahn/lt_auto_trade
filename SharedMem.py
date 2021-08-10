@@ -23,16 +23,22 @@ class SharedMem(object):
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         cls = type(self)
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
+            self.__il_Account_Info = list(args) # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
+
             self.log = Logger()
             self.log.INFO(str(self._instance))
     
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
+
+    #유저 정보(계좌 정보)를 넘겨준다
+    def get_usr_info(self):
+        return self.__il_Account_Info
 
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
