@@ -61,25 +61,40 @@ class Logger:
             cls.fileHandler.setLevel(logging.INFO)
             cls.streamHandler.setLevel(logging.DEBUG)
             
-            print("Constructor of Logger")
+            cls.__logger.info("Logger init")
   
 
     @classmethod
-    def DEBUG(cls, message):
-        cls.__logger.debug(message, stacklevel=2)
+    def DEBUG(cls, *message):
+        ret = ''
+        for word in message:
+            ret += str(word) + " "
+        cls.__logger.debug(ret, stacklevel=2)
 
     @classmethod
-    def INFO(cls, message):
-        cls.__logger.info(message, stacklevel=2)
+    def INFO(cls, *message):
+        ret = ''
+        for word in message:
+            ret += str(word) + " "
+        cls.__logger.info(ret, stacklevel=2)
 
     @classmethod
-    def WARNING(cls, message):
-        cls.__logger.warning(message, stacklevel=2)
+    def WARNING(cls, *message):
+        ret = ''
+        for word in message:
+            ret += str(word) + " "
+        cls.__logger.warning(ret, stacklevel=2)
 
     @classmethod
-    def ERROR(cls, message):
-        cls.__logger.error(message, stacklevel=2)
+    def ERROR(cls, *message):
+        ret = ''
+        for word in message:
+            ret += str(word) + " "
+        cls.__logger.error(ret, stacklevel=2)
 
     @classmethod
-    def CRITICAL(cls, message):
-        cls.__logger.critical(message, stacklevel=2)
+    def CRITICAL(cls, *message):
+        ret = ''
+        for word in message:
+            ret += str(word) + " "
+        cls.__logger.critical(ret, stacklevel=2)
