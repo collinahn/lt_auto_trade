@@ -13,7 +13,6 @@ from SharedMem import SharedMem
 from LoggerLT import Logger
 
 class GetPutDB(object):
-    log = Logger()
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
@@ -27,7 +26,8 @@ class GetPutDB(object):
             # if문 내부에서 초기화 진행
             self.__db_path = const.DB_PATH
             self.__shared_mem = SharedMem()
-            print("Construct of GetPutDb")
+            self.log = Logger()
+            self.log.INFO(str(self._instance))
 
     #메인 메모리 요소들을 DB에 저장
     #만약 한 번에 한 주씩 업데이트 하지 않고 보유한 인스턴스들에 대한 DB업데이트를 한 번에 한다면?
@@ -44,11 +44,11 @@ class GetPutDB(object):
             con.row_factory = sqlite3.Row
             curs = con.cursor()
             #stockName은 최적화시 빼도된다
-            query = """UPDATE tStockProperties SET 
-                `stockName`=?,
-                `stockCurrentPossess`=?, 
-                `stockCurrentValue`=?, 
-                `timeLastUpdate`=?
+            query = """UPDATE tStockProperties SET \
+                `stockName`=?, \
+                `stockCurrentPossess`=?, \
+                `stockCurrentValue`=?, \
+                `timeLastUpdate`=? \
                 WHERE `stockID`=?;"""
             curs.execute(query, (s_Name, n_Quantity, n_Value, s_Time, nStockID))
 
@@ -69,11 +69,11 @@ class GetPutDB(object):
             con.row_factory = sqlite3.Row
             curs = con.cursor()
             #stockName은 최적화시 빼도된다
-            query = """UPDATE tStockProperties SET 
-                `stockName`=?,
-                `stockCurrentPossess`=?, 
-                `stockCurrentValue`=?, 
-                `timeLastUpdate`=?
+            query = """UPDATE tStockProperties SET \
+                `stockName`=?, \
+                `stockCurrentPossess`=?, \
+                `stockCurrentValue`=?, \
+                `timeLastUpdate`=? \
                 WHERE `stockID`=?;"""
             curs.executemany(query, list_Info4Execute)
 
@@ -96,9 +96,9 @@ class GetPutDB(object):
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
             curs = con.cursor()
-            query = """UPDATE tStockProperties SET 
-                `stockUsed`=? 
-                `timeStateChange`=?,
+            query = """UPDATE tStockProperties SET \
+                `stockUsed`=? \
+                `timeStateChange`=?, \
                 WHERE `stockID`=?;"""
             curs.execute(query, (c_CurruentState, nStockID))
             

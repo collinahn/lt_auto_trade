@@ -20,8 +20,6 @@ class Stock(object):
     __mdict_Obj = {}            #생성된 인스턴스들 저장하기 위한 dict 클래스 변수 { nTick:_instance }
     __mdict_ObjCalled = {}      #각 인스턴스들 호출 내역 저장하기 위한 dict 클래스 변수 { nTick:True }
                                 #value가 true : 현재 보유중 false : 현재보유중 아님. key가 없을 땐 보유했던 적 없음
-    log = Logger()
-    
     #생성자가 이미 생성된 종목의 인스턴스인지 판단하고 그에 따라 중복 없이 인스턴스 할당
     def __new__(cls, *args):
         if not hasattr(cls, "_instance"):
@@ -39,6 +37,7 @@ class Stock(object):
     #인스턴스 변수 초기화
     def __init__(self, *args):
         if {args[0]}.issubset(Stock.__mset_Stocks) == False:
+            self.log = Logger()
             self.__in_Ticker = args[0]
             #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
             self.__is_StockName = ""
@@ -55,7 +54,7 @@ class Stock(object):
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
 
-            print("Constructor of Stock", args[0])
+            self.log.INFO("Stock " + str(args[0]) + " @" + str(self._instance))
     
     def __hash__(self, *args):
         return hash((self.args[0]))

@@ -18,8 +18,6 @@ from LoggerLT import Logger
 class SharedMem(object):
     __mdict_MstObject = {}
 
-    log = Logger()
-
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
@@ -30,7 +28,8 @@ class SharedMem(object):
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
-            print("Construct of SharedMem", self._instance)
+            self.log = Logger()
+            self.log.INFO(str(self._instance))
     
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
@@ -42,8 +41,11 @@ class SharedMem(object):
 
     #db에 반영하는 함수 또한 호출되어야 한다.
     def delete(self, nKey: int) -> None:
-        del(self.__mdict_MstObject[nKey])
-        self.log.INFO("Stock Deleted: " + str(nKey))
+        try:
+            del(self.__mdict_MstObject[nKey])
+            self.log.INFO("Stock Deleted: " + str(nKey))
+        except KeyError as ke:
+            self.log.WARNING("Cannot Delete Stock " + str(nKey) + "KeyError: " + str(ke))
 
     #종목을 보유 중인지 확인한다
     def check_possess(self, nKey: int) -> bool:
@@ -63,6 +65,9 @@ class SharedMem(object):
     #보유중인 종목의 코드들을 dict_keys 형태로 반환한다. 
     def get_current_ticks(self):
         return self.__mdict_MstObject.keys()
+
+    def get_shared_mem(self):
+        return self.__mdict_MstObject
 
     #보유중인 종목의 현재값들을 Dict로 반환한다
     def get_current_price_all(self) -> Dict:
@@ -99,7 +104,7 @@ class SharedMem(object):
 
 
     #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 호출 3
-    def update_total_stock_trade_volume(self):
+    def update_trade_volume(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedVolume = WrapperClass.WrapperMethod()
             # obj_Target.stock_volume_q = updatedVolume
@@ -121,6 +126,6 @@ class SharedMem(object):
     def update_all(self):
         self.update_current_stock_price()
         self.update_current_stock_quantity()
-        self.update_total_stock_trade_volume()
+        self.update_trade_volume()
         self.update_last_updated()
 
