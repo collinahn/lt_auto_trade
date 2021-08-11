@@ -10,3 +10,35 @@
 
 # 2021.08.02 created by 태영
 
+
+from KiwoomAPI import KiwoomAPI
+import sys
+from PyQt5.QtWidgets import QApplication
+from KiwoomMain import KiwoomMain
+from SharedMem import SharedMem
+from LoggerLT import Logger
+import threading
+
+class RunThread(object):
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        cls = type(self)
+        if not hasattr(cls, "_init"):
+            cls._init = True
+            # if문 내부에서 초기화 진행
+
+            #키움 초기화 및 로그인 처리
+            qapp = QApplication(sys.argv)
+            kapi = KiwoomMain()
+            
+            #유저 정보를 받아와서 공유메모리 초기화
+            lst_usr_info = kapi.Get_Login_Info()
+            self.__shared_mem = SharedMem(lst_usr_info)
+
+            self.log = Logger()
+            self.log.INFO(self._instance)
