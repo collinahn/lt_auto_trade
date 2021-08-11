@@ -21,17 +21,19 @@ class SharedMem(object):
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
+        cls.log = Logger()
+        cls.log.INFO(cls._instance)
         return cls._instance
 
     def __init__(self, *args, **kwargs):
         cls = type(self)
-        if not hasattr(cls, "_init"):
+        #최초 한 번만 초기화를 진행한다, 인자가 안들어온 경우는 객체만 생성하고 초기화는 하지 않는다.
+        if not hasattr(cls, "_init") and not hasattr(cls, "__il_Account_Info") and args:
             cls._init = True
             # if문 내부에서 초기화 진행
-            self.__il_Account_Info = list(args) # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
+            self.__il_Account_Info = args # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
 
-            self.log = Logger()
-            self.log.INFO(self._instance)
+            self.log.INFO("SharedMem init:", self.__il_Account_Info)
     
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
