@@ -11,12 +11,13 @@
 
 from typing import Dict, List
 from datetime import datetime
-from Stocks import Stock as st
+from Stocks import Stock
 from LoggerLT import Logger
+from utilsLT import QueueLT
+import constantsLT as const
 
 
 class SharedMem(object):
-    __mdict_MstObject = {}
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
@@ -27,11 +28,14 @@ class SharedMem(object):
 
     def __init__(self, *args, **kwargs):
         cls = type(self)
-        #최초 한 번만 초기화를 진행한다, 인자가 안들어온 경우는 객체만 생성하고 초기화는 하지 않는다.
+        #최초 한 번만 초기화를 진행한다, 인자 없이 호출되는 경우 객체만 반환하고 초기화는 하지 않는다. 초기화는 RunThread.__init__에서
         if not hasattr(cls, "_init") and not hasattr(cls, "__il_Account_Info") and args:
             cls._init = True
             # if문 내부에서 초기화 진행
             self.__il_Account_Info = args # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
+            self.__mdict_MstObject = {}   # 보유하고 있는 객체들을 dict형 변수에 저장한다.
+
+            self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE)  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
             self.log.INFO("SharedMem init:", self.__il_Account_Info)
     
@@ -44,7 +48,7 @@ class SharedMem(object):
 
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
-        self.__mdict_MstObject[nKey] = st(nKey)
+        self.__mdict_MstObject[nKey] = Stock(nKey)
         self.log.INFO("New Stock Added:", nKey)
 
     #db에 반영하는 함수 또한 호출되어야 한다.
@@ -79,10 +83,7 @@ class SharedMem(object):
 
     #보유중인 종목의 현재값들을 Dict로 반환한다
     def get_current_price_all(self) -> Dict:
-        dict_StockValues = {}
-        for key, value in self.__mdict_MstObject.items():
-            dict_StockValues[key] = value.price
-        return dict_StockValues
+        return {key: value.price for key, value in self.__mdict_MstObject.items()}
 
     #DB에 저장하기 위한 정보들을 리스트 in 튜플형태로 반환한다.
     def get_info4sql(self) -> List:
