@@ -6,26 +6,28 @@
 ## wriiten by: Jiuk Jang 
 # 2021-08-08 키움 로그인, 조회와 실시간 데이터 처리 관련 APi정리 완료
 # 2021-08-09 체결정보, 잔고처리, 주문 관련 API (미완)
+# 2021-08-12 import 수정 완료, 매수/매도 함수 관련 api update (event_loop자리 이동, E_OnReceiveChejandata 함수 수정, Call_TR함수 살짝 수정) (미완)
 
 ## written by: ChanHyuk Jun
 
 import sys
 import os
-from PyQt5.QAxContainer import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication
-
+from PyQt5.QAxContainer import QAxWidget
+from PyQt5.QtCore import QEventLoop
 
 class KiwoomAPI(QAxWidget):
     def __init__(self):
         super().__init__()
         self.login_event_loop = QEventLoop() #로그인 관련 이벤트 루프
+        self.event_loop_CommRqData = QEventLoop()
+        self.event_loop_SendOrder = QEventLoop()
         
         # 초기 작업
         self.set_kiwoom_api() 
         self.set_event_slot()
         self.rq_data = {}
         self.output_list = []
+        self.mlist_chejan_data = {}
 
     # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
     def set_kiwoom_api(self):
@@ -73,11 +75,13 @@ class KiwoomAPI(QAxWidget):
     # 체결정보 / 잔고정보 처리
     def E_OnReceiveChejanData(self, sGubun, nItemCnt, sFidList):
         # sGubun = 0: 주문체결통보, 1:잔고통보, 3:특이신호
-        if sGubun == 0:
-            ilist_Chejan_data = [self.GetChejanData(9203), self.GetChejanData(900), self.GetChejanData(901)]
-    
-        # print(sGubun, nItemCnt, sFidList)
+        if sGubun == 0: #주문번호, 주문수량, 주문가격,
+            self.mlist_chejan_data["체결내용"] = [self.GetChejanData(9203), self.GetChejanData(900), self.GetChejanData(901)]
+        elif sGubun == 1:
+            self.mlist_chejan_data["잔고통보"] = [self.GetChejanData(9001), self.GetChejanData(930), self.GetChejanData(10)]
+
         self.event_loop_SendOrder.exit()
+        # print(sGubun, nItemCnt, sFidList)
 
 #-----------------# 
     ## OpenAPI 함수 ##
@@ -109,7 +113,6 @@ class KiwoomAPI(QAxWidget):
     # 조회 요청
     def CommRqData(self, sRQName, sTrCode, nPrevNext, sScreenNo):
         ret = self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
-        self.event_loop_CommRqData = QEventLoop()
         self.event_loop_CommRqData.exec_()
 
     # 조회 요청 시 TR의 Input 값을 지정
@@ -134,36 +137,41 @@ class KiwoomAPI(QAxWidget):
 
     # TR 요청
     def Call_TR(self, strTrCode, sRQName):
-        self.rq_data[strTrCode] = {}
-        self.rq_data[strTrCode]['Data'] = {}
-        
-        self.rq_data[strTrCode]['TrCode'] = strTrCode
+        if sRQName == "시장가매수":
+            pass
 
-        count = self.GetRepeatCnt(strTrCode, sRQName)
-        self.rq_data[strTrCode]['Count'] = count
 
-        if count == 0:
-            lst_temp_data_rq = []
-            dict_temp_data_rq = {}
-            for output in self.output_list:
-                any_rq_data = self.GetCommData(strTrCode, sRQName, 0, output)
-                dict_temp_data_rq[output] = any_rq_data
-
-            lst_temp_data_rq.append(dict_temp_data_rq)
+        else: 
+            self.rq_data[strTrCode] = {}
+            self.rq_data[strTrCode]['Data'] = {}
             
-            self.rq_data[strTrCode]['Data'] = lst_temp_data_rq
+            self.rq_data[strTrCode]['TrCode'] = strTrCode
 
-        if count >= 1:
-            lst_temp_data_rq = []
-            for i in range(count):
+            count = self.GetRepeatCnt(strTrCode, sRQName)
+            self.rq_data[strTrCode]['Count'] = count
+
+            if count == 0:
+                lst_temp_data_rq = []
                 dict_temp_data_rq = {}
                 for output in self.output_list:
-                    any_rq_data = self.GetCommData(strTrCode, sRQName, i, output)
+                    any_rq_data = self.GetCommData(strTrCode, sRQName, 0, output)
                     dict_temp_data_rq[output] = any_rq_data
 
                 lst_temp_data_rq.append(dict_temp_data_rq)
-            
-            self.rq_data[strTrCode]['Data'] = lst_temp_data_rq
+                
+                self.rq_data[strTrCode]['Data'] = lst_temp_data_rq
+
+            if count >= 1:
+                lst_temp_data_rq = []
+                for i in range(count):
+                    dict_temp_data_rq = {}
+                    for output in self.output_list:
+                        any_rq_data = self.GetCommData(strTrCode, sRQName, i, output)
+                        dict_temp_data_rq[output] = any_rq_data
+
+                    lst_temp_data_rq.append(dict_temp_data_rq)
+                
+                self.rq_data[strTrCode]['Data'] = lst_temp_data_rq
     
     # 체결잔고 데이터 반환
     def GetChejanData(self, nFid):
@@ -173,9 +181,8 @@ class KiwoomAPI(QAxWidget):
     
     # 주식 주문을 서버로 전송, 에러코드 반환
     def SendOrder(self, sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo):
-        ret = self.dynamicCall('SendOrder(String, String, String, int, String, int, int, String, String)', sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo)
-        self.event_loop_SendOrder = QEventLoop()
-        self.event._loop_SendOrder.exec_()
+        ret = self.dynamicCall('SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)', [sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo])
+        self.event_loop_SendOrder.exec_()
 
         # if ret != 0:
         #     print("매수실패")
@@ -185,7 +192,6 @@ class KiwoomAPI(QAxWidget):
         return ret
         
     
-
 
 
 
