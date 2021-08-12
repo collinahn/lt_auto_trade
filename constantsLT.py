@@ -12,11 +12,16 @@ print(const.EXAMPLE_CONST)
 
 # 2021.08.01 created by taeyoung
 
-STOCK_VALUE_QUEUE_SIZE = 100
+STOCK_VALUE_QUEUE_SIZE = 20
 
-STOCK_TRADING_VOLUME_QUEUE_SIZE = 10
+STOCK_TRADING_VOLUME_QUEUE_SIZE = 20
 
 DB_PATH = './db/db.sqlite3'
 
 SM_UPDATE_PERIOD = 60
 
+REQUEST_QUEUE_SIZE = 128
+
+LOGIC_OPTION = { "LarryWilliams", "CandleTrade" }
+
+TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }

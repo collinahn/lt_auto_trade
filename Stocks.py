@@ -14,6 +14,7 @@ from typing import List
 import constantsLT as const
 from LoggerLT import Logger
 from utilsLT import QueueLT
+import time
 
 class Stock(object):
     __mn_TotalStock = 0         #인스턴스 생성 카운트하기 위한 클래스 변수
@@ -24,16 +25,23 @@ class Stock(object):
 
     #생성자가 이미 생성된 종목의 인스턴스인지 판단하고 그에 따라 중복 없이 인스턴스 할당
     def __new__(cls, *args):
-        if not hasattr(cls, "_instance"):
-            cls._instance = super().__new__(cls)
-            Stock.__mdict_Obj[args[0]] = cls._instance
-            Stock.__mdict_ObjCalled[args[0]] = True
-        elif {args[0]}.issubset(Stock.__mset_Stocks) == False:
-            cls._instance = super().__new__(cls)
-            Stock.__mdict_Obj[args[0]] = cls._instance
-            Stock.__mdict_ObjCalled[args[0]] = True
-        else:
+        if hasattr(cls, "_instance") and args[0] in Stock.__mset_Stocks:
             cls._instance = Stock.__mdict_Obj[args[0]]
+        else:
+            cls._instance = super().__new__(cls)
+            Stock.__mdict_Obj[args[0]] = cls._instance
+            Stock.__mdict_ObjCalled[args[0]] = True
+
+        # if not hasattr(cls, "_instance"):
+        #     cls._instance = super().__new__(cls)
+        #     Stock.__mdict_Obj[args[0]] = cls._instance
+        #     Stock.__mdict_ObjCalled[args[0]] = True
+        # elif {args[0]}.issubset(Stock.__mset_Stocks) == False:
+        #     cls._instance = super().__new__(cls)
+        #     Stock.__mdict_Obj[args[0]] = cls._instance
+        #     Stock.__mdict_ObjCalled[args[0]] = True
+        # else:
+        #     cls._instance = Stock.__mdict_Obj[args[0]]
         return cls._instance
 
     #인스턴스 변수 초기화
@@ -47,11 +55,21 @@ class Stock(object):
             self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE) #주가 저장
             self.__in_StockQuantity = 0
             self.__iq_TotalTradeVolume = QueueLT(const.STOCK_TRADING_VOLUME_QUEUE_SIZE)
+            self.__is_LastUpdated = ""
+            self.__id_DayBought = time.strftime("%d", time.localtime(time.time())) #래리 윌리엄스 모듈에서만 사용
             # self.__if_StockFluncDay = 0.0
             # self.__if_StockFluncHour = 0.0
             # self.__if_StockFlunc30Min = 0.0
             # self.__if_StockFlunc5Min = 0.0
-            self.__is_LastUpdated = ""
+            self.__is_LogicOption = ""
+            self.__ib_JohnBer = False
+            self.__is_TradeOption = ""
+            self.__il_PriceDataBefore = {
+                "start":0,
+                "end":0,
+                "highest":0,
+                "lowest":0
+            } #필히 장마감 후 initialize할 때 초기화 해야함!
 
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
@@ -63,7 +81,7 @@ class Stock(object):
 
     #파이썬 gc 주기에 의해 즉시 반영이 안 될수도 있음
     def __del__(self):
-        print("Delete Stock ", self.__in_Ticker)
+        print("Delete Stock", self.__in_Ticker)
         Stock.__mn_TotalStock -= 1
         Stock.__mdict_ObjCalled[self.__in_Ticker] = False
         del(Stock.__mdict_Obj[self.__in_Ticker]) #제거되고 나면 새로운 인스턴스 생성
@@ -103,6 +121,27 @@ class Stock(object):
     def active_stocks(self) -> set:
         return self.__mset_Stocks
 
+    @property
+    def logic_option(self) -> set:
+        return self.__is_LogicOption
+
+    @property
+    def johnber(self) -> bool:
+        return self.__ib_JohnBer
+
+    @property
+    def trade_option(self) -> str:
+        return self.__is_TradeOption
+
+    #래리 윌리엄스 전략
+    @property
+    def day_bought(self) -> int: 
+        return self.__id_DayBought
+
+    @property
+    def price_data_before(self) -> dict:
+        return self.__il_PriceDataBefore
+
 
     #현재 보유수량을 업데이트한다.
     @quantity.setter
@@ -113,7 +152,7 @@ class Stock(object):
 
             self.__in_StockQuantity += nUpdatedQuantity
             self.log.INFO("Stock ID:", self.__in_Ticker, ",", \
-                "Updated Quanity:", self.__in_StockQuantity)
+                          "Updated Quanity:", self.__in_StockQuantity)
         except ValueError as ve:
             self.log.ERROR("ValueError:", ve)
 
@@ -151,6 +190,36 @@ class Stock(object):
     def updated_time(self, sNowTime):
         self.__is_LastUpdated = sNowTime
 
+    @logic_option.setter
+    def logic_option(self, sOption: str):
+        if sOption in const.LOGIC_OPTION:
+            self.__is_LogicOption = sOption
+            self.log.INFO("Logic option", sOption, "is Set")
+        else:
+            self.log.CRITICAL("Non-Existing Logic Option!!")
+
+    @johnber.setter
+    def johnber(self, bJohnber: bool):
+        self.__ib_JohnBer = bJohnber
+        self.log.INFO("Johnber option", bJohnber, "is Set")
+
+    @trade_option.setter
+    def trade_option(self, sOption: str):
+        if sOption in const.TRADE_OPTION:
+            self.__is_TradeOption = sOption
+            self.log.INFO("Trade option", sOption, "is Set")
+        else:
+            self.log.CRITICAL("Non-Existing Trade Option!!")
+
+    #래리 윌리엄스 전략
+    @day_bought.setter
+    def day_bought(self, dayBought: int):
+        self.__id_DayBought = dayBought
+
+    #[전일시가, 전일종가] 로 매일 초기화 반드시 해야함
+    @price_data_before.setter
+    def price_data_before(self, dict_price: dict):
+        self.__il_PriceDataBefore = dict_price
 
 
 

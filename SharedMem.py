@@ -18,6 +18,7 @@ import constantsLT as const
 
 
 class SharedMem(object):
+    __mdict_MstObject = {}   # 보유하고 있는 객체들을 dict형 변수에 저장한다.
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
@@ -32,8 +33,7 @@ class SharedMem(object):
         if not hasattr(cls, "_init") and not hasattr(cls, "__il_Account_Info") and args:
             cls._init = True
             # if문 내부에서 초기화 진행
-            self.__il_Account_Info = args # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
-            self.__mdict_MstObject = {}   # 보유하고 있는 객체들을 dict형 변수에 저장한다.
+            self.__il_AccountInfo = args # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
 
             self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE)  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
@@ -44,12 +44,12 @@ class SharedMem(object):
 
     #유저 정보(계좌 정보)를 넘겨준다
     def get_usr_info(self):
-        return self.__il_Account_Info
+        return self.__il_AccountInfo
 
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
         self.__mdict_MstObject[nKey] = Stock(nKey)
-        self.log.INFO("New Stock Added:", nKey)
+        self.log.INFO("New Stock Instance:", nKey)
 
     #db에 반영하는 함수 또한 호출되어야 한다.
     def delete(self, nKey: int) -> None:

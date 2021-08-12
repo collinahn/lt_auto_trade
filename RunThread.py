@@ -21,6 +21,7 @@ from KiwoomAPI import KiwoomAPI
 from KiwoomMain import KiwoomMain
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
+from TradeLogic import TradeLogic
 from LoggerLT import Logger
 
 class RunThread(object):
@@ -62,10 +63,11 @@ class RunThread(object):
             
             time.sleep(1)
             
-    #매매의사결정 스케쥴러 함수 호출
-    #살지말지 결정 후 다른 스레드(api 호출클래스메소드) 호출
+    #매매의사결정 함수 호출
     def call_price(self):
-        pass
+        cls_TL = TradeLogic()
+
+        cls_TL.show_me_the_money()
     
     #의사결정 스레드의 주문대로 api호출하여 주문한다.
     def trade_stocks(self):
