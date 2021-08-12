@@ -13,6 +13,7 @@
 from typing import List
 import constantsLT as const
 from LoggerLT import Logger
+from utilsLT import QueueLT
 
 class Stock(object):
     __mn_TotalStock = 0         #인스턴스 생성 카운트하기 위한 클래스 변수
@@ -43,9 +44,9 @@ class Stock(object):
             #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
             self.__is_StockName = ""
             self.__in_StockCurrentPrice = 0
-            self.__iq_StockValues = StockQueue(const.STOCK_VALUE_QUEUE_SIZE) #주가 저장
+            self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE) #주가 저장
             self.__in_StockQuantity = 0
-            self.__iq_TotalTradeVolume = StockQueue(const.STOCK_TRADING_VOLUME_QUEUE_SIZE)
+            self.__iq_TotalTradeVolume = QueueLT(const.STOCK_TRADING_VOLUME_QUEUE_SIZE)
             # self.__if_StockFluncDay = 0.0
             # self.__if_StockFluncHour = 0.0
             # self.__if_StockFlunc30Min = 0.0
@@ -149,55 +150,6 @@ class Stock(object):
     @updated_time.setter
     def updated_time(self, sNowTime):
         self.__is_LastUpdated = sNowTime
-
-
-class StockQueue:
-
-    def __init__(self, nSize: int):
-        self.__iq_Queue = [None] * nSize
-        self.__in_QueueSize = nSize
-        self.__in_HeadPointIdx = 0
-        self.__in_TailPointIdx = 0
-        
-    #큐에 데이터를 집어넣고 테일포인트를 옮긴다.
-    def pushQueue(self, nStockValue: int) -> bool:
-        n_NextTailPointIdx = (self.__in_TailPointIdx +1) % self.__in_QueueSize
-        
-        if n_NextTailPointIdx is self.__in_HeadPointIdx:            # 테일+1 == 헤드(버퍼 full) 
-            return False
-        else:
-            self.__iq_Queue[self.__in_TailPointIdx] = nStockValue   # 테일포인터가 가르키는 자리에 value삽입
-            self.__in_TailPointIdx = n_NextTailPointIdx             # 다음 자리로 테일포인터 이동.
-            return True
-        
-    #큐에서 데이터를 빼고(함수 앞에서 getHead로) 헤드포인트를 옮긴다.
-    def pullQueue(self) -> bool:
-        n_NextHeadPointIdx = (self.__in_HeadPointIdx+1) % self.__in_QueueSize
-
-        if self.__in_HeadPointIdx is self.__in_TailPointIdx:        # 테일 == 헤드 (buffer empty)
-            return False
-        else:
-            self.__in_HeadPointIdx = n_NextHeadPointIdx
-            return True
-
-    # pull oldest push
-    def getHead(self) -> int:
-        return self.__iq_Queue[self.__in_HeadPointIdx]
-        
-    # pull latest push
-    def getTail(self) -> int:
-        #  테일포인트는 미리 데이터가 삽입될 곳을 가리키고 있음
-        if self.__in_TailPointIdx == 0:
-            return self.__iq_Queue[self.__in_QueueSize - 1]
-        return self.__iq_Queue[self.__in_TailPointIdx -1] 
-
-    def isEmpty(self) -> bool:
-        return self.__in_HeadPointIdx == self.__in_TailPointIdx
-
-    def isFull(self) -> bool:
-        n_NextTailPointIdx = (self.__in_TailPointIdx +1) % self.__in_QueueSize
-
-        return n_NextTailPointIdx == self.__in_HeadPointIdx             # 테일+1 == 헤드 => 버퍼 full
 
 
 
