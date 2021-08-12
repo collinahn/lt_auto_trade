@@ -66,35 +66,25 @@ class Logger:
 
     @classmethod
     def DEBUG(cls, *message):
-        ret = ''
-        for word in message:
-            ret += str(word) + " "
+        ret = ''.join(str(word) + ' ' for word in message)
         cls.__logger.debug(ret, stacklevel=2)
 
     @classmethod
     def INFO(cls, *message):
-        ret = ''
-        for word in message:
-            ret += str(word) + " "
+        ret = ''.join(str(word) + ' ' for word in message)
         cls.__logger.info(ret, stacklevel=2)
 
     @classmethod
     def WARNING(cls, *message):
-        ret = ''
-        for word in message:
-            ret += str(word) + " "
+        ret = ''.join(str(word) + ' ' for word in message)
         cls.__logger.warning(ret, stacklevel=2)
 
     @classmethod
     def ERROR(cls, *message):
-        ret = ''
-        for word in message:
-            ret += str(word) + " "
+        ret = ''.join(str(word) + ' ' for word in message)
         cls.__logger.error(ret, stacklevel=2)
 
     @classmethod
     def CRITICAL(cls, *message):
-        ret = ''
-        for word in message:
-            ret += str(word) + " "
+        ret = ''.join(str(word) + ' ' for word in message)
         cls.__logger.critical(ret, stacklevel=2)
