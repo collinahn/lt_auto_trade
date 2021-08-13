@@ -12,16 +12,36 @@ print(const.EXAMPLE_CONST)
 
 # 2021.08.01 created by taeyoung
 
+#------------DB-----------
+
+DB_PATH = './db/db.sqlite3'
+
+#------------DB-----------
+
+
+
+#--------SharedMemory--------
+
 STOCK_VALUE_QUEUE_SIZE = 20
 
 STOCK_TRADING_VOLUME_QUEUE_SIZE = 20
 
-DB_PATH = './db/db.sqlite3'
-
 SM_UPDATE_PERIOD = 60
+
+SECONDS_DAY = 86400
+
+LONG_SLEEP_TIME = 100
+
+#--------SharedMemory--------
+
+
+
+#-----------Trade------------
 
 REQUEST_QUEUE_SIZE = 128
 
 LOGIC_OPTION = { "LarryWilliams", "CandleTrade" }
 
 TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
+
+#-----------Trade------------

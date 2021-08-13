@@ -94,6 +94,28 @@ class SharedMem(object):
         
         return list_Ret
 
+
+    #변수 업데이트: 18시
+    #현재시간을 체크해 장이 마감되었는지 확인한다.
+    def is_market_closed(self) -> bool:
+        return datetime.now().hour > 18
+
+    def init_after_market_closed(self) -> bool:
+        for obj_Target in self.__mdict_MstObject.values():
+            n_TotalTrade = 0    #WrapperClass.WrapperMethod()
+            obj_Target.stock_volume_q = n_TotalTrade 
+
+
+            dict_PriceData = {
+                "start":0,      #WrapperClass.WrapperMethod()
+                "end":0,        #WrapperClass.WrapperMethod()
+                "highest":0,    #WrapperClass.WrapperMethod()
+                "lowest":0      #WrapperClass.WrapperMethod()
+            }
+            obj_Target.price_data_before = dict_PriceData
+
+
+
     #타 스레드에서 주기적으로 호출 1
     def update_current_stock_price(self):
         for obj_Target in self.__mdict_MstObject.values():
@@ -130,11 +152,11 @@ class SharedMem(object):
 
         self.log.INFO("Shared Memory Updated: Updated Time")
 
-
     #다른 스레드에서 이거 하나만 호출해도 된다.
     def update_all(self):
         self.update_current_stock_price()
         self.update_current_stock_quantity()
         self.update_trade_volume()
         self.update_last_updated()
+            
 
