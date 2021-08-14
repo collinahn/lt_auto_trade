@@ -8,7 +8,9 @@
 # 2021-08-09 체결정보, 잔고처리, 주문 관련 API (미완)
 # 2021-08-12 import 수정 완료, 매수/매도 함수 관련 api update (event_loop자리 이동, E_OnReceiveChejandata 함수 수정, Call_TR함수 살짝 수정) (미완)
 
-## written by: ChanHyuk Jun
+## written by: ChanHyeok Jeon
+# 2021-08-12 조건검색식, 종목검색 (미완)
+# 2021-08-14 조건검색식, 종목검색, 실시간 검색(미완)
 
 import sys
 import os
@@ -46,6 +48,12 @@ class KiwoomAPI(QAxWidget):
         # 체결정보 / 잔고정보 처리
         self.OnReceiveChejanData.connect(self.E_OnReceiveChejanData)
 
+       # 조건식 호출 / 조건검색 결과 수신 처리
+        self.OnReceiveConditionVer.connect(self.E_OnReceiveConditionVer)
+        self.OnReceiveTrCondition.connect(self.E_OnReceiveTrCondition)
+        self.OnReceiveRealCondition.connect(self.E_OnReceiveRealCondition)
+
+
     def E_OnReceiveMsg(self, sScrNo, sRQName, sTrCode, sMsg):
         print(sScrNo, sRQName, sTrCode, sMsg)
 
@@ -82,6 +90,40 @@ class KiwoomAPI(QAxWidget):
 
         self.event_loop_SendOrder.exit()
         # print(sGubun, nItemCnt, sFidList)
+
+    #조건식 호출결과 수신
+    def E_OnReceiveConditionVer(self):
+        condition_list = {'index': [], 'name': []}
+        #수신한 조건식을 조건명 인덱스와 조건식 이름 전달 GetConditionNameList()
+        temporary_condition_list = self.dynamicCall("GetConditionNameList()".split(";"))
+
+        for data in temporary_condition_list:
+            try:
+                index_name = data.split("^")
+                condition_list['index'].append(str(index_name[0]))
+                condition_list['name'].append(str(index_name[1]))
+            except IndexError:
+                pass
+        
+        condition_index = str(condition_list['index'][0])
+        condition_name = str(condition_list['name'][0])
+
+        condition_search_result = self.dynamicCall("SendCondition(self, sScreenNo, sConditionName, nConditionIndex, nRealtimeSearch)", "0156", str(condition_name), condition_index, 0)
+        #서버에 조건검색 요청 SendCondition(self, sScreenNo, sConditionName, nConditionIndex, nRealtimeSearch)
+        if condition_search_result == 1:
+            print("조건검색 조회 요청 성공")
+        elif condition_search_result != 1:
+            print("조건검색 조회 요청 실패")
+
+    #조건검색 중지 (미사용...?)
+    #def SendConditionStop(self, sScreenNo, sConditionName, nConditionIndex):
+
+    def E_OnReceiveTrCondition(self, sScreenNo, sCodeList, sConditionName, nConditionIndex, nContinueSearch):
+        self.code_list = []
+        self.code_list.append(sCodeList)
+    
+    #실시간 미완성
+    #def E_OnReceiveRealCondition(self, sCode, sConditionName, sConditionIndex):
 
 #-----------------# 
     ## OpenAPI 함수 ##
@@ -191,7 +233,25 @@ class KiwoomAPI(QAxWidget):
 
         return ret
         
-    
+#조건 검색 제한사항 (1)조건검색 1초에 5회만 요청가능 (2)조건별 1분당 1회로 제한
+#실시간 조건검색 제한사항 (1)결과로 100종목 이상 검색되는 경우 사용 불가 (2)10개 조건식만 사용가능
+
+    #조건 검색 목록 서버에 요청
+    def GetConditionLoad(self):
+        result = self.dynamicCall("GetConditionLoad()")
+
+        if result == 1:
+            print("조건 검색식이 올바르게 조회되었습니다.")
+        elif result != 1:
+            print("조건검색식 조회 중 오류가 발생했습니다.")
+
+
+    #실시간 시세 등록 (미완성)
+    ##실시간 등록타입을 0으로 하면 초기화, 1로 하면 추가 등록
+    #def SetRealReg(self, sScreenNo, sCodeList, sFIDList, sRegType):   
+
+    #실시간 시세 해지 (미완성)
+    #def SetRealRemove(self, sScreenNo, sDelCode):
 
 
 
