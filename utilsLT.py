@@ -43,6 +43,15 @@ class QueueLT:
             return self.__iq_Queue[self.__in_QueueSize - 1]
         return self.__iq_Queue[self.__in_TailPointIdx -1] 
 
+    def getHeadPoint(self) -> int:
+        return self.__in_HeadPointIdx
+
+    def getTailPoint(self) -> int:
+        return self.__in_TailPointIdx
+
+    def getQueue(self) -> list:
+        return self.__iq_Queue
+
     def isEmpty(self) -> bool:
         return self.__in_HeadPointIdx == self.__in_TailPointIdx
 

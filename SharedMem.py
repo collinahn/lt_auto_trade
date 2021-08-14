@@ -86,14 +86,34 @@ class SharedMem(object):
         return {key: value.price for key, value in self.__mdict_MstObject.items()}
 
     #DB에 저장하기 위한 정보들을 리스트 in 튜플형태로 반환한다.
-    def get_info4sql(self) -> List:
+    def get_property_info4sql(self) -> List:
         list_Ret = []
         for key, value in self.__mdict_MstObject.items():
-            tuple_Ret = (value.name, value.quantity, value.price, value.updated_time, key)
+            tuple_Ret = (value.name, \
+                        value.quantity, 
+                        value.price, 
+                        value.updated_time, 
+                        key)
             list_Ret.append(tuple_Ret)
         
         return list_Ret
 
+    #DB에 저장하기 위한 정보들을 리스트 in 튜플형태로 반환한다.
+    def get_candle_info4sql(self) -> List:
+        s_NowTime=str(datetime.now().strftime("%x"))  # 08/15/21
+        list_Ret = []
+
+        for key, value in self.__mdict_MstObject.items():
+            tuple_Ret = (key, \
+                        value.price_data_before["start"], 
+                        value.price_data_before["end"], 
+                        value.price_data_before["highest"], 
+                        value.price_data_before["lowest"], 
+                        value.stock_volume_n,
+                        s_NowTime)
+            list_Ret.append(tuple_Ret)
+        
+        return list_Ret
 
     #변수 업데이트: 18시
     #현재시간을 체크해 장이 마감되었는지 확인한다.

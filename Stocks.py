@@ -102,12 +102,17 @@ class Stock(object):
     def price(self) -> int:
         return self.__in_StockCurrentPrice
 
-    #하루 단위 거래량 큐의 시작 인덱스와 큐에 해당하는 리스트를 반환
+    #하루 단위 거래량 큐의 시작 인덱스와 큐에 해당하는 리스트를 튜플로 반환
     @property
     def stock_volume_q(self) -> tuple: 
-        if self.__iq_TotalTradeVolume.__in_TailPointIdx == 0:
-            return const.STOCK_TRADING_VOLUME_QUEUE_SIZE - 1, self.__iq_TotalTradeVolume.__iq_Queue
-        return self.__iq_TotalTradeVolume.__in_TailPointIdx - 1, self.__iq_TotalTradeVolume.__iq_Queue
+        if self.__iq_TotalTradeVolume.getTailPoint() == 0:
+            return const.STOCK_TRADING_VOLUME_QUEUE_SIZE - 1, self.__iq_TotalTradeVolume.getQueue()
+        return self.__iq_TotalTradeVolume.getTailPoint() - 1, self.__iq_TotalTradeVolume.getQueue()
+    
+    #당일의 거래량 반환
+    @property
+    def stock_volume_n(self) -> int:
+        return self.stock_volume_q[1][self.stock_volume_q[0]]
 
     @property
     def updated_time(self) -> str:

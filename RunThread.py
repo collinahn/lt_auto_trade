@@ -14,14 +14,13 @@
 # 2021.08.02 created by 태영
 
 
-from KiwoomMain import KiwoomMain
 import sys
 import time
 from threading import Thread, Timer
 import constantsLT as const
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
-from KiwoomAPI import KiwoomAPI
+# from KiwoomAPI import KiwoomAPI
 from KiwoomMain import KiwoomMain
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
