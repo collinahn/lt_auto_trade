@@ -8,7 +8,8 @@
 # 2021-08-09 체결정보요청 완성, 매수/매도 함수(미완)
 # 2021-08-12 로거 추가, import 수정 완료, 매수/매도 함수 update (미완)
 
-## written by: ChanHyuk Jun
+## written by: ChanHyeok Jeon
+# 2021-08-14 조건검색식 함수 update(미완)
 
 
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
@@ -71,7 +72,8 @@ class KiwoomMain:
     # 시장가 매도 8/12 시작
     def Stock_Sell_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
         self.kiwoom.SendOrder("시장가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, 0, "03", "")
-    
+
+    # 조건식 검색    
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
