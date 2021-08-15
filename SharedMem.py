@@ -37,7 +37,7 @@ class SharedMem(object):
 
             self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE)  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
-            self.log.INFO("SharedMem init:", self.__il_Account_Info)
+            self.log.INFO("SharedMem init:", self.__il_AccountInfo)
     
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
@@ -179,4 +179,51 @@ class SharedMem(object):
         self.update_trade_volume()
         self.update_last_updated()
             
+
+
+
+if __name__ == "__main__":
+    list_r = [101,1010,1010100]
+    sm = SharedMem(list_r)
+    sm.add(100011)
+    sm.add(100111)
+    sm.add(101111)
+    sm.add(111111)
+    sm.print_shared_mem()
+
+    sm.delete(111111)
+    sm.print_shared_mem()
+
+    sm.get_usr_info()
+
+    samsung = sm.get_instance(100011)
+    samsung.name = "Samsung"
+    samsung.quantity = 5
+    samsung.quantity = -3
+    samsung.updated_time = str(datetime.now())
+    samsung.logic_option ="LarryWilliams"
+    samsung.stock_volume_q = 100_000_000_000
+    
+    lg = sm.get_instance(100111)
+    lg.name = "LG"
+    lg.quantity = 50
+    lg.updated_time = str(datetime.now())
+    lg.logic_option ="LarryWilliams"
+    lg.stock_volume_q = 50_000_000_000
+
+    hyundai = sm.get_instance(101111)
+    hyundai.name = "Hyundai"
+    hyundai.quantity = 100
+    hyundai.updated_time = str(datetime.now())
+    hyundai.logic_option ="LarryWilliams"
+    hyundai.stock_volume_q = 23_000_000_000
+
+    print("do i have Stock 111111? >>", sm.check_possess(111111))
+    print("how many do i have? >>", sm.get_current_possess())
+    print("what do i have? >>", sm.get_current_ticks())
+    print("how are they valued? >>", sm.get_current_price_all())
+    print("property data for sql ? >>", sm.get_property_info4sql())
+    print("candle data for sql ? >>", sm.get_candle_info4sql())
+
+
 

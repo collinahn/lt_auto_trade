@@ -25,6 +25,9 @@ class Stock(object):
 
     #생성자가 이미 생성된 종목의 인스턴스인지 판단하고 그에 따라 중복 없이 인스턴스 할당
     def __new__(cls, *args):
+        if isinstance(args[0], int) == False:
+            raise(ValueError)
+
         if hasattr(cls, "_instance") and args[0] in Stock.__mset_Stocks:
             cls._instance = Stock.__mdict_Obj[args[0]]
         else:
@@ -32,16 +35,6 @@ class Stock(object):
             Stock.__mdict_Obj[args[0]] = cls._instance
             Stock.__mdict_ObjCalled[args[0]] = True
 
-        # if not hasattr(cls, "_instance"):
-        #     cls._instance = super().__new__(cls)
-        #     Stock.__mdict_Obj[args[0]] = cls._instance
-        #     Stock.__mdict_ObjCalled[args[0]] = True
-        # elif {args[0]}.issubset(Stock.__mset_Stocks) == False:
-        #     cls._instance = super().__new__(cls)
-        #     Stock.__mdict_Obj[args[0]] = cls._instance
-        #     Stock.__mdict_ObjCalled[args[0]] = True
-        # else:
-        #     cls._instance = Stock.__mdict_Obj[args[0]]
         return cls._instance
 
     #인스턴스 변수 초기화
@@ -52,9 +45,9 @@ class Stock(object):
             #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
             self.__is_StockName = ""
             self.__in_StockCurrentPrice = 0
-            self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE) #주가 저장
+            self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE, "StockValue") #주가 저장
             self.__in_StockQuantity = 0
-            self.__iq_TotalTradeVolume = QueueLT(const.STOCK_TRADING_VOLUME_QUEUE_SIZE)
+            self.__iq_TotalTradeVolume = QueueLT(const.STOCK_TRADING_VOLUME_QUEUE_SIZE, "TradeVolumePerDay")
             self.__is_LastUpdated = ""
             self.__id_DayBought = time.strftime("%d", time.localtime(time.time())) #래리 윌리엄스 모듈에서만 사용
             # self.__if_StockFluncDay = 0.0
@@ -147,10 +140,14 @@ class Stock(object):
     def price_data_before(self) -> dict:
         return self.__il_PriceDataBefore
 
+    
+    @name.setter
+    def name(self, sName: str) -> None:
+        self.__is_StockName = sName
 
-    #현재 보유수량을 업데이트한다.
+    #매수/매도시 현재 보유수량을 업데이트한다.
     @quantity.setter
-    def quantity(self, nUpdatedQuantity) -> None:
+    def quantity(self, nUpdatedQuantity: int) -> None:
         try:
             if self.__in_StockQuantity + nUpdatedQuantity < 0:
                 raise(ValueError)
@@ -230,10 +227,22 @@ class Stock(object):
 
 
 
-# __self__ 
-# a = Stock(12)
-# print(a.quantity)
-# a.quantity = 1
-# print(a.quantity)
-# a.quantity = -1
-# print(a.quantity)
+if __name__ == "__main__":
+    a = Stock(111100)
+    print("active stock is", a.active_stock)
+    b = Stock(111110)
+    print("active stock is", b.active_stock)
+    c = Stock(111111)
+    print("active stock is", c.active_stock)
+    d = Stock(111111)
+    print("active stock is", d.active_stock)
+    # error = Stock('1')
+    # e = Stock(1)
+
+    a.price = 10_000
+    b.price = 20_000
+    for stocks in a.active_stocks:
+        print("stock:", stocks, "stock price", Stock(stocks).price)
+    
+    c.logic_option = "LarryWilliams"
+    print(c.logic_option)
