@@ -88,3 +88,15 @@ class Logger:
     def CRITICAL(cls, *message):
         ret = ''.join(str(word) + ' ' for word in message)
         cls.__logger.critical(ret, stacklevel=2)
+
+
+if __name__ == "__main__":
+    log = Logger()
+
+    sMsg = "LogMessage"
+
+    log.CRITICAL(sMsg, 1)
+    log.ERROR(sMsg, 2)
+    log.WARNING(sMsg, 3)
+    log.INFO(sMsg, 4)
+    log.DEBUG(sMsg, 5)
