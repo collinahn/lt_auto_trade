@@ -31,6 +31,7 @@ log.DEBUG("msg")
 
 import logging
 import logging.handlers
+import constantsLT as const
 
 class Logger:
 
@@ -49,7 +50,7 @@ class Logger:
             cls.__logger.setLevel(logging.DEBUG)
 
             cls.formatter = logging.Formatter('%(asctime)s [%(filename)s:%(funcName)s:%(lineno)s] [%(levelname)s] >> %(message)s')
-            cls.fileHandler = logging.FileHandler('./log/log.txt')
+            cls.fileHandler = logging.FileHandler(const.LOG_PATH)
             cls.streamHandler = logging.StreamHandler()
             cls.fileHandler.setFormatter(cls.formatter)
             cls.streamHandler.setFormatter(cls.formatter)

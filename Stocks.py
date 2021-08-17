@@ -171,7 +171,7 @@ class Stock(object):
             self.__in_StockCurrentPrice = nCurrentPrice
             self.__iq_StockValues.pushQueue(nCurrentPrice)  # 큐에 저장
             
-            self.log.INFO("Price Updated and Enqueued: " + str(nCurrentPrice))
+            self.log.INFO("Stock ID:", self.__in_Ticker, "Price Updated and Enqueued: ", nCurrentPrice)
 
         except ValueError as ve:
             self.log.ERROR("ValueError:", ve)
@@ -184,7 +184,7 @@ class Stock(object):
         self.__iq_TotalTradeVolume.pushQueue(nTradeVolume)
         self.__iq_TotalTradeVolume.pullQueue()  #10일간의 데이터를 저장해두기 위해서 테일포인트를 옮기는 순간 헤드포인트도 옮긴다
         
-        self.log.INFO("Total Stock Volume Updated and Enqueued:", nTradeVolume)
+        self.log.INFO("Stock ID:", self.__in_Ticker, "Total Stock Volume Updated and Enqueued:", nTradeVolume)
 
     #api가 주는 데이터로 업데이트를 마치고 꼭 호출 필요
     #SharedMem.py에서 구현한다.

@@ -35,7 +35,7 @@ class SharedMem(object):
             # if문 내부에서 초기화 진행
             self.__il_AccountInfo = args # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
 
-            self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE)  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
+            self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
             self.log.INFO("SharedMem init:", self.__il_AccountInfo)
     

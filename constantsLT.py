@@ -12,9 +12,16 @@ print(const.EXAMPLE_CONST)
 
 # 2021.08.01 created by taeyoung
 
+#-----------Logger--------
+
+LOG_PATH = './log/log.txt'
+
+#-----------Logger--------
+
+
 #------------DB-----------
 
-DB_PATH = './db/db.sqlite3'
+DB_SHARED_PATH = './db/shared.sqlite3'
 
 #------------DB-----------
 
