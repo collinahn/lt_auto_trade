@@ -19,9 +19,9 @@ import time
 from threading import Thread, Timer
 import constantsLT as const
 from datetime import datetime
-from PyQt5.QtWidgets import QApplication
+# from PyQt5.QtWidgets import QApplication
 # from KiwoomAPI import KiwoomAPI
-from KiwoomMain import KiwoomMain
+# from KiwoomMain import KiwoomMain
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
 from TradeLogic import TradeLogic
@@ -41,12 +41,12 @@ class RunThread(object):
             # if문 내부에서 초기화 진행
 
             #키움 초기화 및 로그인 처리
-            self.qapp = QApplication(sys.argv)
-            self.kapi = KiwoomMain()
+            # self.qapp = QApplication(sys.argv)
+            # self.kapi = KiwoomMain()
             
             #유저 정보를 받아와서 공유메모리 초기화
-            lst_usr_info = self.kapi.Get_Login_Info()
-            self.__shared_mem = SharedMem(lst_usr_info)
+            # lst_usr_info = self.kapi.Get_Login_Info()
+            # self.__shared_mem = SharedMem(lst_usr_info)
 
             self.log = Logger()
             self.log.INFO(self._instance)
@@ -76,7 +76,8 @@ class RunThread(object):
         self.log.INFO("thread start")
 
         while True:
-            if t_LastUpdated > const.SM_UPDATE_PERIOD:
+            t_Now = datetime.now().timestamp()
+            if t_Now - t_LastUpdated > const.SM_UPDATE_PERIOD:
                 cls_SM.update_all()
                 cls_DB.update_properties()
 
@@ -119,3 +120,8 @@ class RunThread(object):
         for work in lst_Threads:
             work.join()
             self.log.CRITICAL("Thread Joined !", work)
+
+
+if __name__ == "__main__":
+    rt = RunThread()
+    rt.run_thread()
