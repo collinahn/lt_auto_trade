@@ -176,8 +176,8 @@ class SharedMem(object):
     def update_all(self):
         self.update_current_stock_price()
         self.update_current_stock_quantity()
-        self.update_trade_volume()
         self.update_last_updated()
+        
             
 
 
