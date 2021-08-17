@@ -24,7 +24,7 @@ class GetPutDB(object):
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
-            self.__db_path = const.DB_PATH
+            self.__db_path = const.DB_SHARED_PATH
             self.__shared_mem = SharedMem()
             self.log = Logger()
             self.log.INFO(self._instance)
@@ -192,3 +192,28 @@ class GetPutDB(object):
             self.log.ERROR("Exception Occured,", e)
             return None
         return rows
+
+
+
+if __name__ == "__main__":
+    sm = SharedMem([123, 123, 123])
+    db = GetPutDB()
+    sm.add(111)
+    sm.add(222)
+    sm.add(333)
+    sm.add(444)
+    sm.add(555)
+
+    sm.get_shared_mem()
+    sm.get_usr_info()
+
+    sm.get_instance(111).price = 100000
+    sm.get_instance(222).price = 120000
+    sm.get_instance(333).price = 133000
+    sm.get_instance(444).price = 4000
+    sm.get_instance(555).price = 50000
+
+    db.update_properties()
+
+    sm.get_instance(555).price = 1000000
+    db.update_property(555)
