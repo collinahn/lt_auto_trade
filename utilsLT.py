@@ -9,6 +9,11 @@
 from LoggerLT import Logger
 
 class QueueLT:
+    def __new__(cls, *args):
+        cls._instance = super().__new__(cls)
+        cls.log = Logger()
+        cls.log.INFO(cls._instance)
+        return cls._instance
 
     def __init__(self, nSize: int, sName="Random"):
         self.__is_Name = sName #디버깅 정보
@@ -17,8 +22,7 @@ class QueueLT:
         self.__in_HeadPointIdx = 0
         self.__in_TailPointIdx = 0
 
-        self.log = Logger()
-        self.log.INFO(sName, "Queue initiated, size:", nSize)
+        self.log.INFO(sName, "Queue init, size:", nSize)
         
     #큐에 데이터를 집어넣고 테일포인트를 옮긴다.
     def pushQueue(self, value: int or dict) -> bool:
