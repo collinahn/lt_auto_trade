@@ -89,19 +89,50 @@ class GetPutDB(object):
 
 
     # 사용자가 사용하는 주식인지 여부를 업데이트한다 ("T" 트래킹 중, "N" 트래킹 안함)
-    def update_stock_tracking_info(self, nStockID: int, bUsed=False) -> bool:
+    def update_stock_tracking_info(self, nStockID: int, bUsed=True) -> bool:
         c_CurruentState = 'N' if bUsed == False else 'T'
+        s_NowTime=str(datetime.now())
 
         try:
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
             curs = con.cursor()
             query = """UPDATE tStockProperties SET \
-                `stockUsed`=? \
-                `timeStateChange`=?, \
+                `stockUsed`=?, \
+                `timeStateChange`=? \
                 WHERE `stockID`=?;"""
-            curs.execute(query, (c_CurruentState, nStockID))
+            curs.execute(query, (c_CurruentState, s_NowTime, nStockID))
             
+            con.commit()
+            con.close()
+        except Exception as e:
+            self.log.ERROR("Exception Occured,", e)
+            return False
+        return True
+
+    #최초 실행시 db 칼럼을 초기화한다.
+    def add_property_column(self, nStockID: int) -> bool:
+        obj_Instance = self.__shared_mem.get_instance(nStockID)
+        s_Name = obj_Instance.name
+        n_Quantity = obj_Instance.quantity
+        n_Value = obj_Instance.price
+        s_Time = obj_Instance.updated_time
+
+        try:
+            con = sqlite3.connect(self.__db_path)
+            con.row_factory = sqlite3.Row
+            curs = con.cursor()
+            #stockName은 최적화시 빼도된다
+            query = """INSERT OR REPLACE INTO \
+                        tStockProperties(stockID, stockName, stockCurrentPossess, stockCurrentValue, timeLastUpdate ) 
+                        Values(?,?,?,?,?);"""
+            curs.execute(query, \
+                        (nStockID, 
+                        s_Name, 
+                        n_Quantity, 
+                        n_Value, 
+                        s_Time))
+
             con.commit()
             con.close()
         except Exception as e:

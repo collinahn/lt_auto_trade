@@ -10,7 +10,7 @@ from LoggerLT import Logger
 
 class QueueLT:
 
-    def __init__(self, nSize: int, sName: str):
+    def __init__(self, nSize: int, sName="Random"):
         self.__is_Name = sName #디버깅 정보
         self.__iq_Queue = [None] * nSize
         self.__in_QueueSize = nSize

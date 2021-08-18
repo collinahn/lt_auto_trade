@@ -37,8 +37,12 @@ class SharedMem(object):
 
             self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
+            from GetPutDB import GetPutDB
+            self.cls_DB = GetPutDB()
+
             self.log.INFO("SharedMem init:", self.__il_AccountInfo)
-    
+
+
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
 
@@ -49,12 +53,19 @@ class SharedMem(object):
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
         self.__mdict_MstObject[nKey] = Stock(nKey)
+
+        self.cls_DB.add_property_column(nKey)
+        self.cls_DB.update_stock_tracking_info(nKey)
+        
         self.log.INFO("New Stock Instance:", nKey)
 
     #db에 반영하는 함수 또한 호출되어야 한다.
     def delete(self, nKey: int) -> None:
         try:
             del(self.__mdict_MstObject[nKey])
+
+            self.cls_DB.update_stock_tracking_info(nKey, False)
+
             self.log.INFO("Stock Deleted:", nKey)
         except KeyError as ke:
             self.log.WARNING("Cannot Delete Stock", nKey, "KeyError:", ke)

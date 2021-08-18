@@ -67,7 +67,7 @@ class Stock(object):
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
 
-            self.log.INFO("Stock", args[0], "@"+str(self._instance))
+            self.log.INFO("Stock", args[0], self._instance)
     
     def __hash__(self, *args):
         return hash((self.args[0]))
