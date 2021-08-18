@@ -17,6 +17,8 @@ class GetPutDB(object):
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
+            cls.log = Logger()
+        cls.log.INFO(cls._instance)
         return cls._instance
 
     def __init__(self):
@@ -26,8 +28,8 @@ class GetPutDB(object):
             # if문 내부에서 초기화 진행
             self.__db_path = const.DB_SHARED_PATH
             self.__shared_mem = SharedMem()
-            self.log = Logger()
-            self.log.INFO(self._instance)
+
+            self.log.INFO("GetPutDB init")
 
     #메인 메모리 요소들을 DB에 저장
     #만약 한 번에 한 주씩 업데이트 하지 않고 보유한 인스턴스들에 대한 DB업데이트를 한 번에 한다면?

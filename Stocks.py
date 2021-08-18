@@ -34,13 +34,15 @@ class Stock(object):
             cls._instance = super().__new__(cls)
             Stock.__mdict_Obj[args[0]] = cls._instance
             Stock.__mdict_ObjCalled[args[0]] = True
+            cls.log = Logger()
+        
+        cls.log.INFO(cls._instance)
 
         return cls._instance
 
     #인스턴스 변수 초기화
     def __init__(self, *args):
         if {args[0]}.issubset(Stock.__mset_Stocks) == False:
-            self.log = Logger()
             self.__in_Ticker = args[0]
             #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
             self.__is_StockName = ""
@@ -67,7 +69,7 @@ class Stock(object):
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
 
-            self.log.INFO("Stock", args[0], self._instance)
+            self.log.INFO("Stock init:", args[0], self._instance)
     
     def __hash__(self, *args):
         return hash((self.args[0]))
