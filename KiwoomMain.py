@@ -8,6 +8,7 @@
 # 2021-08-09 체결정보요청 완성, 매수/매도 함수(미완)
 # 2021-08-12 로거 추가, import 수정 완료, 매수/매도 함수 update (미완)
 # 2021-08-17 함수 이름 수정, 전일거래량상위 가져오는 함수 구현, 시장가 매수 완성
+# 2021-08-18 당인거래량상위 함수 완성, 로거 부분적 추가, 계좌수익률요청 함수, 매수,매도 (지정, 정정, 취소) 구현 (미완)
 
 ## written by: ChanHyeok Jeon
 # 2021-08-14 조건검색식 함수 update(미완)
@@ -16,7 +17,7 @@
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
 
 import sys
-# from LoggerLT import Logger
+from LoggerLT import Logger
 from KiwoomAPI import KiwoomAPI
 from PyQt5.QtWidgets import QApplication
 from TR_Code import output_list
@@ -25,15 +26,25 @@ class KiwoomMain:
     def __init__(self):
         self.kiwoom = KiwoomAPI()
         self.kiwoom.login()
-        # self.log = Logger()
+        self.log = Logger()
 # ----------- #
     ##사용가능한 함수들
-    # 내 로그인 정보 불러오기 (로그인 상태, 이름, ID, 계좌 개수, 계좌번호) 8/8일 작성
+    # 내 로그인 정보 불러오기 (로그인 상태, 이름, ID, 계좌 개수, 계좌번호) 8.8일 작성
     def Get_Login_Info(self):
         istr_login_state = self.kiwoom.print_login_connect_state #
         istr__user_name, istr__user_id, istr__account_count, istr__account_list = self.kiwoom.login_info()
         list_login_data =  istr_login_state, istr__user_name, istr__user_id, istr__account_count, istr__account_list.rstrip(';')
         return list_login_data
+
+    # OPT10085: 계좌수익률요청 
+    def Get_Account_Info(self, istr_account_number):
+        self.kiwoom.output_list = output_list['OPT10085']
+        self.kiwoom.SetInputValue("계좌번호", istr_account_number)
+        self.kiwoom.CommRqData("OPT10085", "OPT10085", 0, "0101")
+
+        self.log.INFO("수익률 관련 정보 = ", self.kiwoom.rq_data['OPT10085']['Data'])
+
+        return self.kiwoom.rq_data['OPT10085']['Data']
 
     # OPT10001: 주식기본정보요청 관련 정보 TR_Code.py에 있음 (종목명, 액면가, 자본금, 시가총액, 영업이익, PER, ROE ) 8/8일 작성
     def Get_Basic_Stock_Info(self, istr_stock_code):
@@ -43,7 +54,7 @@ class KiwoomMain:
 
         return self.kiwoom.rq_data['OPT10001']['Data'][0]
 
-    # OPT10003: 체결정보요청 관련 정보 TR_Code.py에 있음 (현재가, 체결강도) 8/8일 작성// 8/9일 수정 완료
+    # OPT10003: 체결정보요청 관련 정보 TR_Code.py에 있음 (현재가, 체결강도) 8.8일 작성// 8.9일 수정 완료
     def Chegyul_Info(self, istr_stock_code):
         self.kiwoom.output_list = output_list['OPT10003']
         self.kiwoom.SetInputValue("종목코드", istr_stock_code)
@@ -51,8 +62,8 @@ class KiwoomMain:
     
         return self.kiwoom.rq_data['OPT10003']['Data'][0]
 
-    # OPT10030: 당일거래량상위요청 8/17 시작 (미완)
-    def Today_Volume_Top(self, str_market_choice, str_sort_volume, str_credential, str_trade_volume ):
+    # OPT10030: 당일거래량상위요청 8.17 시작 (미완) // 8.18 완성
+    def Today_Volume_Top(self, str_market_choice, str_sort_volume, str_credential, str_trade_volume):
         self.kiwoom.output_list = output_list['OPT10030']
 
         # 시장구분 = 전체(0), 코스피(1), 코스닥(101)
@@ -70,8 +81,7 @@ class KiwoomMain:
             self.kiwoom.SetInputValue("정렬구분", "3")
 
         # 종목포함 = 관리종목 포함(0), 관리종목 미포함(1), 증100만보기(6), 증50만보기(12)
-        if True:
-            pass
+        self.kiwoom.SetInputValue("관리종목포함", "0") 
         
         # 신용구분 =  0:전체조회, 1:신용융자A군, 2:신용융자B군, 3:신용융자C군, 4:신용융자D군
         if str_credential == "전체조회":
@@ -92,19 +102,18 @@ class KiwoomMain:
             self.kiwoom.SetInputValue("신용구분", str_trade_volume)
 
         # 가격구분 =  0:전체조회, 1:1천원미만, 2:1천원이상, 3:1천원~2천원, 4:2천원~5천원, 5:5천원이상, 6:5천원~1만원, 10:1만원미만, 7:1만원이상, 8:5만원이상, 9:10만원이상
-        if str_credential == "전체조회":
-            self.kiwoom.SetInputValue("신용구분", "0")
-        elif str_credential == "A":
-            self.kiwoom.SetInputValue("신용구분", "1")
-        elif str_credential == "B":
-            self.kiwoom.SetInputValue("신용구분", "2")
-        elif str_credential == "C":
-            self.kiwoom.SetInputValue("신용구분", "3")
-        elif str_credential == "D":
-            self.kiwoom.SetInputValue("신용구분", "4")
+        self.kiwoom.SetInputValue("가격구분", 0)
+
+        # 거래대금구분 = 0:전체조회, 1:1천만원이상, 3:3천만원이상, 4:5천만원이상, 10:1억원이상, 30:3억원이상, 50:5억원이상, 100:10억원이상, 300:30억원이상, 500:50억원이상, 1000:100억원이상, 3000:300억원이상, 5000:500억원이상
+        self.kiwoom.SetInputValue("거래대금구분", 0)
+
+        # 장운영구분 = 0:전체조회, 1:장중, 2:장전시간외, 3:장후시간외
+        self.kiwoom.SetInputValue("장운영구분", 0)
+
+        self.kiwoom.CommRqData("OPT10030", "OPT10030", 0, "0101")
+
+        return self.kiwoom.rq_data['OPT10030']['Data']
         
-
-
     # OPT10031: 전일거래량상위요청 8/17 완료
     def Yesterday_Volume_Top(self, str_market_choice, str_volume_choice, str_ranking):
         self.kiwoom.output_list = output_list['OPT10031']
@@ -130,18 +139,47 @@ class KiwoomMain:
 
         self.kiwoom.CommRqData("OPT10031", "OPT10031", 0, "0101")
 
+        self.log.INFO("전일거래량상위요청: ", self.kiwoom.rq_data['OPT10031']['Data'])
         return self.kiwoom.rq_data['OPT10031']['Data']
+    
+    # OPT10075: 미체결요청 (미완성)
+    def Not_suceed_TR(self, istr_account,number, ):
+        pass
 
-    # 시장가 매수 (확인) 8/12 수정 // 8/17 수정완료
+#----------#
+    # 시장가 매수 (확인) 8.12 수정 // 8.17 수정완료
     def Stock_Buy_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
         self.kiwoom.SendOrder("시장가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, 0, "03", "")
-        # self.log.INFO("시장가매수: " + self.kiwoom.SendOrder("시장가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, 0, "03", ""))
-        return self.kiwoom.mlist_chejan_data
+        self.log.INFO("시장가매수: ", self.kiwoom.mlist_chejan_data)
+        # return self.kiwoom.mlist_chejan_data
 
+    # 지정가 매수 8.18 완료 (확인 x)
+    def Stock_Buy_Certainprice(self, istr_stock_code, istr_account_number, in_quantity, in_price):
+        self.kiwoom.SendOrder("지정가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, in_price, "00", "")
 
-    # 시장가 매도 8/12 시작 // 8/18 수정 완료 (확인 x)
+    # 시장가 매도 8.12 시작 // 8.18 수정 완료 
     def Stock_Sell_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
         self.kiwoom.SendOrder("시장가매도", "0101", istr_account_number, 2, istr_stock_code, in_quantity, 0, "03", "")
+
+    # 지정가 매도 8.18 완료 
+    def Stock_Sell_Certainprice(self, istr_stock_code, istr_account_number, in_quantity, in_price):
+        self.kiwoom.SendOrder("지정가매도", "0101", istr_account_number, 2, istr_stock_code, in_quantity, in_price, "00", "")
+    
+    # 매수 취소 8.18 미완 
+    def Stock_Buy_Cancel(self, istr_stock_code, istr_account_number, in_quantity):
+        self.kiwoom.SendOrder("매수취소", "0101", istr_account_number, 3, istr_stock_code, in_quantity, 0, "00", "2")
+
+    # 매수 정정 8.18 미완
+    def Stock_Buy_Update(self, istr_stock_code, istr_account_number, in_quantity, in_price):
+        self.kiwoom.SendOrder("매수정정", "0101", istr_account_number, 5, istr_stock_code, in_quantity, in_price, "00", "1")
+
+    # 매도 취소 8.18 미완 
+    def Stock_Sell_Cancel(self, istr_stock_code, istr_account_number, in_quantity):
+        self.kiwoom.SendOrder("매도취소", "0101", istr_account_number, 4, istr_stock_code, in_quantity, 0, "00", "2")
+
+    # 매도 정정 8.18 미완
+    def Stock_Sell_Update(self, istr_stock_code, istr_account_number, in_quantity, in_price):
+        self.kiwoom.SendOrder("매도정정", "0101", istr_account_number, 6, istr_stock_code, in_quantity, in_price, "00", "1")
 
 
 if __name__ == "__main__":
@@ -155,14 +193,16 @@ if __name__ == "__main__":
     # print(a)
     # result5, result7= api_con.OPT10003('035720')
     # print(result5, result7)
-    account = api_con.Get_Login_Info()
-    # print(type(account[4]))
+    # account = api_con.Get_Login_Info()
+    # print(account[4])
 
     # r = api_con.Stock_Buy_Marketprice('035720', account[4], 10)
     # print(r)
     # s = api_con.Stock_Buy_Marketprice('005930', account[4], 10)
     # print(s)
     # api_con.Stock_Sell_Marketprice('035720', account[4], 10)
-    s = api_con.Yesterday_Volume_Top("코스피", "거래량", 100)
-    print(s)
+    # s = api_con.Yesterday_Volume_Top("코스피", "거래량", 100)
+    # print(s)
     # print(account)
+    api_con.Get_Account_Info('8005204311')
+    api_con.Stock_Buy_Marketprice('035720', '8005204311', 10)
