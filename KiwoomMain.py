@@ -9,6 +9,7 @@
 # 2021-08-12 로거 추가, import 수정 완료, 매수/매도 함수 update (미완)
 # 2021-08-17 함수 이름 수정, 전일거래량상위 가져오는 함수 구현, 시장가 매수 완성
 # 2021-08-18 당인거래량상위 함수 완성, 로거 부분적 추가, 계좌수익률요청 함수, 매수,매도 (지정, 정정, 취소) 구현 (미완)
+# 2021-08-19 매수/매도 정정, 취소 구현 완료 (확인 o), 미체결정보 함수 완성
 
 ## written by: ChanHyeok Jeon
 # 2021-08-14 조건검색식 함수 update(미완)
@@ -141,11 +142,18 @@ class KiwoomMain:
 
         self.log.INFO("전일거래량상위요청: ", self.kiwoom.rq_data['OPT10031']['Data'])
         return self.kiwoom.rq_data['OPT10031']['Data']
-    
-    # OPT10075: 미체결요청 (미완성)
-    def Not_suceed_TR(self, istr_account,number, ):
-        pass
 
+
+    # OPT10075: 미체결요청 완성 (8.19)
+    def Not_Signed_Account(self, istr_account_number):
+        self.kiwoom.SetInputValue("계좌번호", istr_account_number)
+        self.kiwoom.SetInputValue("전체종목구분", "0")
+        self.kiwoom.SetInputValue("매매구분", "0")
+        self.kiwoom.SetInputValue("체결구분", "1")
+        self.kiwoom.CommRqData("실시간미체결요청", "opt10075", 0, "0101")
+        
+        self.log.INFO("미체결정보: ", self.kiwoom.not_signed_account_dict)
+        return self.kiwoom.not_signed_account_dict
 #----------#
     # 시장가 매수 (확인) 8.12 수정 // 8.17 수정완료
     def Stock_Buy_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
@@ -153,9 +161,12 @@ class KiwoomMain:
         self.log.INFO("시장가매수: ", self.kiwoom.mlist_chejan_data)
         # return self.kiwoom.mlist_chejan_data
 
-    # 지정가 매수 8.18 완료 (확인 x)
+    # 지정가 매수 8.18 완료 
     def Stock_Buy_Certainprice(self, istr_stock_code, istr_account_number, in_quantity, in_price):
         self.kiwoom.SendOrder("지정가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, in_price, "00", "")
+
+        self.log.INFO("지정가매도: " , self.kiwoom.mlist_chejan_data)
+        # return self.kiwoom.mlist_chejan_data
 
     # 시장가 매도 8.12 시작 // 8.18 수정 완료 
     def Stock_Sell_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
@@ -164,22 +175,22 @@ class KiwoomMain:
     # 지정가 매도 8.18 완료 
     def Stock_Sell_Certainprice(self, istr_stock_code, istr_account_number, in_quantity, in_price):
         self.kiwoom.SendOrder("지정가매도", "0101", istr_account_number, 2, istr_stock_code, in_quantity, in_price, "00", "")
-    
-    # 매수 취소 8.18 미완 
-    def Stock_Buy_Cancel(self, istr_stock_code, istr_account_number, in_quantity):
-        self.kiwoom.SendOrder("매수취소", "0101", istr_account_number, 3, istr_stock_code, in_quantity, 0, "00", "2")
+     
+    # 매수 취소 8.18 미완 // 8.19 완성 
+    def Stock_Buy_Cancel(self, istr_stock_code, istr_account_number, in_quantity, istr_order_code):
+        self.kiwoom.SendOrder("매수취소", "0101", istr_account_number, 3, istr_stock_code, in_quantity, 0, "00", istr_order_code)
 
-    # 매수 정정 8.18 미완
-    def Stock_Buy_Update(self, istr_stock_code, istr_account_number, in_quantity, in_price):
-        self.kiwoom.SendOrder("매수정정", "0101", istr_account_number, 5, istr_stock_code, in_quantity, in_price, "00", "1")
+    # 매수 정정 8.18 미완 // 8.19 완성
+    def Stock_Buy_Update(self, istr_stock_code, istr_account_number, in_quantity, in_price, istr_order_code):
+        self.kiwoom.SendOrder("매수정정", "0101", istr_account_number, 5, istr_stock_code, in_quantity, in_price, "00", istr_order_code)
 
-    # 매도 취소 8.18 미완 
-    def Stock_Sell_Cancel(self, istr_stock_code, istr_account_number, in_quantity):
-        self.kiwoom.SendOrder("매도취소", "0101", istr_account_number, 4, istr_stock_code, in_quantity, 0, "00", "2")
+    # 매도 취소 8.18 미완 // 8.19 완성
+    def Stock_Sell_Cancel(self, istr_stock_code, istr_account_number, in_quantity, istr_order_code):
+        self.kiwoom.SendOrder("매도취소", "0101", istr_account_number, 4, istr_stock_code, in_quantity, 0, "00", istr_order_code)
 
-    # 매도 정정 8.18 미완
-    def Stock_Sell_Update(self, istr_stock_code, istr_account_number, in_quantity, in_price):
-        self.kiwoom.SendOrder("매도정정", "0101", istr_account_number, 6, istr_stock_code, in_quantity, in_price, "00", "1")
+    # 매도 정정 8.18 미완 // 8.19 완성
+    def Stock_Sell_Update(self, istr_stock_code, istr_account_number, in_quantity, in_price, istr_order_code):
+        self.kiwoom.SendOrder("매도정정", "0101", istr_account_number, 6, istr_stock_code, in_quantity, in_price, "00", istr_order_code)
 
 
 if __name__ == "__main__":
@@ -204,5 +215,10 @@ if __name__ == "__main__":
     # s = api_con.Yesterday_Volume_Top("코스피", "거래량", 100)
     # print(s)
     # print(account)
-    api_con.Get_Account_Info('8005204311')
-    api_con.Stock_Buy_Marketprice('035720', '8005204311', 10)
+    # api_con.Get_Account_Info('8005204311')
+    # api_con.Stock_Buy_Marketprice('035720', '8005204311', 10)
+    # api_con.Stock_Sell_Marketprice('035720', '8005204311', 3)
+    # api_con.Stock_Buy_Certainprice('035720', '8005204311', 1, 140000)
+    # api_con.Not_Signed_Account('8005204311')
+    # api_con.Stock_Buy_Update('035720', '8005204311', 1, 141000, '179567')
+    # api_con.Stock_Buy_Cancel('035720', '8005204311', 1, '192233')
