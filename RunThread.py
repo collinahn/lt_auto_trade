@@ -63,7 +63,7 @@ class RunThread(object):
         cls_SM = SharedMem()
 
         while True:
-            #최초 실행히 타이머를 실행시키고 반복문을 벗어난다.
+            #최초 실행시 하루 단위 타이머를 실행시키고 반복문을 벗어난다.
             if datetime.now().hour > 18:
                 Timer(const.SECONDS_DAY, cls_SM.init_after_market_closed()).start()
                 break
@@ -72,7 +72,6 @@ class RunThread(object):
 
 
     #sharedMem 업데이트하고 바로 DB 업데이트하는 함수 호출, 60초에 한번
-    #하루 단위 초기화도 여기서 .. ?
     def update_info(self):
         t_LastUpdated = datetime.now().timestamp()
         cls_SM = SharedMem()

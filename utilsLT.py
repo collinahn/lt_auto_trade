@@ -1,28 +1,44 @@
 # 자료구조 및 유용한 함수들 공유해서 쓰기 위해 만든 파일들.
 
 # 2021.08.12 created by taeyoung (Stocks.py에 있던 큐 자료구조 이관)
+# 2021.08.20 modified by taeyoung 큐 이름을 같은 것으로 생성하면 동일한 인스턴스가 반환되도록 생성자 수정
 
 # 데이터 집어넣을 땐: push
 # 데이터 가져올 땐: getHead & pull
 # ** push/pull을 할 때 자체적으로 큐가 꽉 차있는지/비어있는지 확인한다.
+# 이름이 같으면 크기를 다르게 설정하여 생성하여도 기존 생성된 인스턴스가 반환된다.
 
 from LoggerLT import Logger
 
 class QueueLT:
-    def __new__(cls, *args):
-        cls._instance = super().__new__(cls)
-        cls.log = Logger()
-        cls.log.INFO(cls._instance)
+    __mset_Instance = set()
+    __mdict_MstInstance = {}
+
+    def __new__(cls, nSize: int, sName: str):
+        if hasattr(cls, "_instance") and sName in QueueLT.__mset_Instance:
+            cls._instance = QueueLT.__mdict_MstInstance[sName]
+        else:
+            cls._instance = super().__new__(cls)
+            QueueLT.__mdict_MstInstance[sName] = cls._instance
+            cls.log = Logger()
+
+        cls.log.INFO("Name:", sName, cls._instance)
         return cls._instance
 
-    def __init__(self, nSize: int, sName="Random"):
-        self.__is_Name = sName #디버깅 정보
-        self.__iq_Queue = [None] * nSize
-        self.__in_QueueSize = nSize
-        self.__in_HeadPointIdx = 0
-        self.__in_TailPointIdx = 0
+    def __init__(self, nSize: int, sName: str):
+        if sName not in QueueLT.__mset_Instance: 
+            self.__is_Name = sName #디버깅 정보
+            self.__iq_Queue = [None] * nSize
+            self.__in_QueueSize = nSize
+            self.__in_HeadPointIdx = 0
+            self.__in_TailPointIdx = 0
 
-        self.log.INFO(sName, "Queue init, size:", nSize)
+            QueueLT.__mset_Instance.add(sName)
+
+            self.log.INFO(sName, "Queue init, size:", nSize)
+
+        else: 
+            self.log.WARNING(sName, "Queue Called Again")
         
     #큐에 데이터를 집어넣고 테일포인트를 옮긴다.
     def pushQueue(self, value: int or dict) -> bool:
@@ -103,4 +119,8 @@ if __name__ == "__main__":
     qu.pushQueue(15)
     print(qu.getQueue())
 
-    
+    queue2 = QueueLT(20, "Example")
+    print(queue2.getQueue())
+
+    queue3 = QueueLT(100, "Ex")
+    print(queue3.getQueue())
