@@ -7,7 +7,7 @@
 # 2021-08-08 키움 로그인, 조회와 실시간 데이터 처리 관련 APi정리 완료
 # 2021-08-09 체결정보, 잔고처리, 주문 관련 API (미완)
 # 2021-08-12 import 수정 완료, 매수/매도 함수 관련 api update (event_loop자리 이동, E_OnReceiveChejandata 함수 수정, Call_TR함수 살짝 수정) (미완)
-
+# 2021-08-19 미체결정보 관련 함수 구현 완료
 
 ## written by: ChanHyuk Jeon
 
@@ -29,6 +29,7 @@ class KiwoomAPI(QAxWidget):
         self.rq_data = {}
         self.output_list = []
         self.mlist_chejan_data = {}
+        self.not_signed_account_dict = {}
 
     # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
     def set_kiwoom_api(self):
@@ -138,8 +139,73 @@ class KiwoomAPI(QAxWidget):
 
     # TR 요청
     def Call_TR(self, strTrCode, sRQName):
-        if sRQName == "시장가매수":
-            pass
+        if sRQName == "실시간미체결요청":
+            cnt = self.dynamicCall(
+                "GetRepeatCnt(QString, QString)", strTrCode, sRQName)
+
+            for i in range(cnt):
+                stock_code = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "종목코드")
+                stock_code = stock_code.strip()
+
+                stock_order_number = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문번호")
+                stock_order_number = int(stock_order_number)
+
+                stock_name = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "종목명")
+                stock_name = stock_name.strip()
+
+                stock_order_type = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문구분")
+                stock_order_type = stock_order_type.strip().lstrip('+').lstrip('-')
+
+                stock_order_price = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문가격")
+                stock_order_price = int(stock_order_price)
+
+                stock_order_quantity = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문수량")
+                stock_order_quantity = int(stock_order_quantity)
+
+                stock_not_signed_quantity = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "미체결수량")
+                stock_not_signed_quantity = int(stock_not_signed_quantity)
+
+                stock_signed_quantity = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "체결량")
+                stock_signed_quantity = int(stock_signed_quantity)
+
+                stock_present_price = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "현재가")
+                stock_present_price = int(
+                    stock_present_price.strip().lstrip('+').lstrip('-'))
+
+                stock_order_status = self.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문상태")
+                stock_order_status = stock_order_status.strip()
+
+                if not stock_order_number in self.not_signed_account_dict:
+                    self.not_signed_account_dict[stock_order_number] = {}
+
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'종목코드': stock_code})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'종목명': stock_name})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'주문구분': stock_order_type})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'주문가격': stock_order_price})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'주문수량': stock_order_quantity})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'미체결수량': stock_not_signed_quantity})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'체결량': stock_signed_quantity})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'현재가': stock_present_price})
+                self.not_signed_account_dict[stock_order_number].update(
+                    {'주문상태': stock_order_status})
 
         else: 
             self.rq_data[strTrCode] = {}
@@ -191,8 +257,3 @@ class KiwoomAPI(QAxWidget):
 
         return ret
         
-    
-
-
-
-
