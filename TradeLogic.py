@@ -14,7 +14,9 @@ class TradeLogic:
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
+            cls.log = Logger()
 
+        cls.log.INFO(cls._instance)
         return cls._instance
 
     def __init__(self, *args, **kwargs):
@@ -24,8 +26,7 @@ class TradeLogic:
 
             self.iq_SharedMem = SharedMem()
 
-            self.log = Logger()
-            self.log.INFO(cls._instance)
+            self.log.INFO("TradeLogic init")
 
     def print_queue(self):
         print(self.iq_SharedMem.iq_RequestQueue)
@@ -131,8 +132,8 @@ class TradeLogic:
 
     #스레드에서 호출되는 함수(전체 로직이 호출되어야 함)
     def show_me_the_money(self):
+        cls_SM = SharedMem()
         while True:
-            cls_SM = SharedMem()
 
             for key, value in cls_SM.get_shared_mem():
                 #사용하는 이름은 무조건 constantsLT 파일에 등록이 되어있고 Stock인스턴스에 속성으로 초기화를 시켜줘야한다.

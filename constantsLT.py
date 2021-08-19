@@ -16,6 +16,8 @@ print(const.EXAMPLE_CONST)
 
 LOG_PATH = './log/log.txt'
 
+STACK_LV = 3
+
 #-----------Logger--------
 
 

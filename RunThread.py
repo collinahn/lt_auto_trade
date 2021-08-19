@@ -14,6 +14,9 @@
 # 2021.08.02 created by 태영
 
 
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL) # ctrl + c로 종료할 수 있도록
+
 import sys
 import time
 from threading import Thread, Timer
@@ -32,6 +35,9 @@ class RunThread(object):
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
+            cls.log = Logger()
+
+        cls.log.INFO(cls._instance)
         return cls._instance
 
     def __init__(self):
@@ -48,8 +54,7 @@ class RunThread(object):
             # lst_usr_info = self.kapi.Get_Login_Info()
             # self.__shared_mem = SharedMem(lst_usr_info)
 
-            self.log = Logger()
-            self.log.INFO(self._instance)
+            self.log.INFO("RunThread init")
 
     # 장마감 이후 18:00에 오늘의 정보로 공유메모리 인스턴스 내부의 정보 업데이트
     # 추후 db 새로운 테이블을 생성해 업데이트 예정 
@@ -95,7 +100,7 @@ class RunThread(object):
     
     #의사결정 스레드의 주문대로 api호출하여 주문한다.
     def trade_stocks(self):
-        cls_KW = KiwoomMain() # Kiwoom관련 클래스를 싱글턴으로 만들고, 그 후 스레드로 호출할 메소드 있어야함
+        # cls_KW = KiwoomMain() # Kiwoom관련 클래스를 싱글턴으로 만들고, 그 후 스레드로 호출할 메소드 있어야함
 
         self.log.INFO("thread start")
 

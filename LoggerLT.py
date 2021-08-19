@@ -62,33 +62,33 @@ class Logger:
             cls.fileHandler.setLevel(logging.INFO)
             cls.streamHandler.setLevel(logging.DEBUG)
             
-            cls.__logger.info("Logger init")
+            cls.__logger.info("Logger init", stacklevel=const.STACK_LV)
   
 
     @classmethod
     def DEBUG(cls, *message):
         ret = ''.join(str(word) + ' ' for word in message)
-        cls.__logger.debug(ret, stacklevel=2)
+        cls.__logger.debug(ret, stacklevel=const.STACK_LV)
 
     @classmethod
     def INFO(cls, *message):
         ret = ''.join(str(word) + ' ' for word in message)
-        cls.__logger.info(ret, stacklevel=2)
+        cls.__logger.info(ret, stacklevel=const.STACK_LV)
 
     @classmethod
     def WARNING(cls, *message):
         ret = ''.join(str(word) + ' ' for word in message)
-        cls.__logger.warning(ret, stacklevel=2)
+        cls.__logger.warning(ret, stacklevel=const.STACK_LV)
 
     @classmethod
     def ERROR(cls, *message):
         ret = ''.join(str(word) + ' ' for word in message)
-        cls.__logger.error(ret, stacklevel=2)
+        cls.__logger.error(ret, stacklevel=const.STACK_LV)
 
     @classmethod
     def CRITICAL(cls, *message):
         ret = ''.join(str(word) + ' ' for word in message)
-        cls.__logger.critical(ret, stacklevel=2)
+        cls.__logger.critical(ret, stacklevel=const.STACK_LV)
 
 
 if __name__ == "__main__":
