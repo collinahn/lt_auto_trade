@@ -77,30 +77,34 @@ class TradeLogic:
     def Larry_Williams(self, nStockID: int) -> bool:
         cls_TargetStock = self.iq_SharedMem.get_instance(nStockID)
         n_PriceNow = cls_TargetStock.price
-        n_TodayDate = time.strftime("%d", time.localtime(time.time()))
-        dict_Data = cls_TargetStock.price_data_before
+        n_PriceBought = cls_TargetStock.price_bought
+        n_TodayDate = time.strftime("%x", time.localtime(time.time())) # 08/15/21
+        dict_DayBefore = cls_TargetStock.price_data_before
         
 
         #------------------파는 로직------------------
-        #거래 다음날 시가에 전부 던진다
-        #아직 존버는 구현 안함
+        #존버조건에 해당하지 않는다면 거래 다음날 시가에 전부 던진다
         if cls_TargetStock.quantity > 0 and cls_TargetStock.day_bought != n_TodayDate:
-            dict_SellRequest = { 
-            "StockID":nStockID,
-            "TradeOption":cls_TargetStock.trade_option,
-            "JohnBer":cls_TargetStock.johnber,
-            "Buy":0,
-            "Sell":cls_TargetStock.quantity
-            }
-            self.push_queue(dict_SellRequest)
-            self.log.INFO("Sell Request Pushed", dict_SellRequest)
+            if cls_TargetStock.johnber == True and n_PriceBought > n_PriceNow:
+                self.log.INFO("Johnber Executed", "price bought:", cls_TargetStock.price_bought, "price now:", cls_TargetStock.price)
+            else:
+                dict_SellRequest = { 
+                "StockID":nStockID,
+                "TradeOption":cls_TargetStock.trade_option,
+                "JohnBer":cls_TargetStock.johnber,
+                "Buy":0,
+                "Sell":cls_TargetStock.quantity
+                }
+                self.push_queue(dict_SellRequest)
+                self.log.INFO("Sell Request Pushed", dict_SellRequest)
+
         #------------------파는 로직 끝------------------
 
 
         #------------------사는 로직------------------
         #전날 양봉이고 전날 최고가와 최저가 평균을 넘을 때 산다
-        if dict_Data["start"] < dict_Data["end"] \
-            and dict_Data["highest"] + dict_Data["lowest"] < n_PriceNow \
+        if dict_DayBefore["start"] < dict_DayBefore["end"] \
+            and dict_DayBefore["highest"] + dict_DayBefore["lowest"] < n_PriceNow \
             and cls_TargetStock.day_bought != n_TodayDate:
             # 거래일이 오늘이면 더 사지 않는다.
 

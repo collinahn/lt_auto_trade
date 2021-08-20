@@ -48,10 +48,11 @@ class Stock(object):
             self.__is_StockName = ""
             self.__in_StockCurrentPrice = 0
             self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE, "StockValue") #주가 저장
+            self.__in_StockPriceBought = 0
             self.__in_StockQuantity = 0
             self.__iq_TotalTradeVolume = QueueLT(const.STOCK_TRADING_VOLUME_QUEUE_SIZE, "TradeVolumePerDay")
             self.__is_LastUpdated = ""
-            self.__id_DayBought = time.strftime("%d", time.localtime(time.time())) #래리 윌리엄스 모듈에서만 사용
+            self.__id_DayBought = time.strftime("%x", time.localtime(time.time())) #  08/15/21 거래된 날을 따저 추가적인 거래가 일어나지 않도록 한다.
             # self.__if_StockFluncDay = 0.0
             # self.__if_StockFluncHour = 0.0
             # self.__if_StockFlunc30Min = 0.0
@@ -88,6 +89,10 @@ class Stock(object):
     @property
     def name(self) -> str:
         return self.__is_StockName
+
+    @property
+    def price_bought(self) -> int:
+        return self.__in_StockPriceBought
 
     @property
     def quantity(self) -> int:
@@ -146,6 +151,10 @@ class Stock(object):
     @name.setter
     def name(self, sName: str) -> None:
         self.__is_StockName = sName
+
+    @price_bought.setter
+    def price_bought(self, nAveragePriceBought: int) -> None:
+        self.__in_StockPriceBought = nAveragePriceBought
 
     #매수/매도시 현재 보유수량을 업데이트한다.
     @quantity.setter

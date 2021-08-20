@@ -154,6 +154,14 @@ class SharedMem(object):
             # obj_Target.price = updatedPrice
             pass
         self.log.INFO("Shared Memory Updated: Price")
+
+    #평균 매수단가를 업데이트한다.
+    def update_average_price_bought(self):
+        for obj_Target in self.__mdict_MstObject.values():
+            # updatedPrice = WrapperClass.WrapperMethod()
+            # obj_Target.price_bought = updatedPrice
+            pass
+        self.log.INFO("Shared Memory Updated: Average Price Bought")
         
     #타 스레드에서 주기적으로 호출 2
     # 거래량의 경우 신뢰도를 위해 api쪽에서 받아온 데이터와 자체적으로 갖고있는 데이터를 비교 후 업데이트해야한다.
