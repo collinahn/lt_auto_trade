@@ -142,7 +142,7 @@ class SharedMem(object):
                 "lowest":0      #WrapperClass.WrapperMethod()
             }
             obj_Target.price_data_before = dict_PriceData # 업데이트
-            obj_Target.price_data_list = obj_Target.price_data_before #큐에 저장
+            obj_Target.price_data_queue = obj_Target.price_data_before #큐에 저장
 
 
     #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 timer로 호출

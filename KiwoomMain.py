@@ -24,10 +24,23 @@ from PyQt5.QtWidgets import QApplication
 from TR_Code import output_list
 
 class KiwoomMain:
+    def __new__(cls):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__new__(cls)
+            cls.log = Logger()
+        cls.log.INFO(cls._instance)
+        return cls._instance
+
     def __init__(self):
-        self.kiwoom = KiwoomAPI()
-        self.kiwoom.login()
-        self.log = Logger()
+        cls = type(self)
+        if not hasattr(cls, "_init"):
+            cls._init = True
+
+            self.kiwoom = KiwoomAPI()
+            self.kiwoom.login()
+
+            self.log.INFO("KiwoomMain init")
+
 # ----------- #
     ##사용가능한 함수들
     # 내 로그인 정보 불러오기 (로그인 상태, 이름, ID, 계좌 개수, 계좌번호) 8.8일 작성
