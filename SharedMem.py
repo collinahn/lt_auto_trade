@@ -59,7 +59,6 @@ class SharedMem(object):
         
         self.log.INFO("New Stock Instance:", nKey)
 
-    #db에 반영하는 함수 또한 호출되어야 한다.
     def delete(self, nKey: int) -> None:
         try:
             del(self.__mdict_MstObject[nKey])
@@ -134,8 +133,7 @@ class SharedMem(object):
     def init_after_market_closed(self) -> bool:
         for obj_Target in self.__mdict_MstObject.values():
             n_TotalTrade = 0    #WrapperClass.WrapperMethod()
-            obj_Target.stock_volume_q = n_TotalTrade 
-
+            obj_Target.stock_volume_q = n_TotalTrade
 
             dict_PriceData = {
                 "start":0,      #WrapperClass.WrapperMethod()
@@ -143,8 +141,17 @@ class SharedMem(object):
                 "highest":0,    #WrapperClass.WrapperMethod()
                 "lowest":0      #WrapperClass.WrapperMethod()
             }
-            obj_Target.price_data_before = dict_PriceData
+            obj_Target.price_data_before = dict_PriceData # 업데이트
+            obj_Target.price_data_list = obj_Target.price_data_before #큐에 저장
 
+
+    #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 timer로 호출
+    def update_trade_volume(self):
+        for obj_Target in self.__mdict_MstObject.values():
+            # updatedVolume = WrapperClass.WrapperMethod()
+            # obj_Target.stock_volume_q = updatedVolume
+            pass 
+        self.log.INFO("Shared Memory Updated: Total Trade Volume(should be presented once a day)")
 
 
     #타 스레드에서 주기적으로 호출 1
@@ -155,7 +162,7 @@ class SharedMem(object):
             pass
         self.log.INFO("Shared Memory Updated: Price")
 
-    #평균 매수단가를 업데이트한다.
+    #평균 매수단가를 업데이트한다. 2
     def update_average_price_bought(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedPrice = WrapperClass.WrapperMethod()
@@ -163,7 +170,7 @@ class SharedMem(object):
             pass
         self.log.INFO("Shared Memory Updated: Average Price Bought")
         
-    #타 스레드에서 주기적으로 호출 2
+    #타 스레드에서 주기적으로 호출 3
     # 거래량의 경우 신뢰도를 위해 api쪽에서 받아온 데이터와 자체적으로 갖고있는 데이터를 비교 후 업데이트해야한다.
     def update_current_stock_quantity(self):
         for obj_Target in self.__mdict_MstObject.values():
@@ -172,17 +179,7 @@ class SharedMem(object):
             pass
         self.log.INFO("Shared Memory Updated: Quantity")
 
-
-    #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 호출 3
-    def update_trade_volume(self):
-        for obj_Target in self.__mdict_MstObject.values():
-            # updatedVolume = WrapperClass.WrapperMethod()
-            # obj_Target.stock_volume_q = updatedVolume
-            pass 
-        self.log.INFO("Shared Memory Updated: Total Trade Volume(should be presented once a day)")
-
-
-    #마지막 업데이트 시각 갱신
+    #마지막 업데이트 시각 갱신 4
     def update_last_updated(self):
         s_NowTime=str(datetime.now())
 
@@ -194,6 +191,7 @@ class SharedMem(object):
     #다른 스레드에서 이거 하나만 호출해도 된다.
     def update_all(self):
         self.update_current_stock_price()
+        self.update_average_price_bought()
         self.update_current_stock_quantity()
         self.update_last_updated()
         

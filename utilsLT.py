@@ -52,7 +52,7 @@ class QueueLT:
         return True
         
     #큐에서 데이터를 빼고(함수 앞에서 getHead로) 헤드포인트를 옮긴다.
-    def pullQueue(self) -> int:
+    def pullQueue(self) -> bool:
         n_NextHeadPointIdx = (self.__in_HeadPointIdx+1) % self.__in_QueueSize
 
         if self.__in_HeadPointIdx is self.__in_TailPointIdx:        # 테일 == 헤드 (buffer empty)
@@ -79,6 +79,17 @@ class QueueLT:
 
     def getQueue(self) -> list:
         return self.__iq_Queue
+
+    #사용하기 쉽도록 정렬하여 리스트로 전달한다
+    def getList(self) -> list:
+        if self.__in_TailPointIdx == 0: #비어있거나 한바퀴 돈 것
+            return self.__iq_Queue
+
+        queue = self.__iq_Queue[:] #깊은 복사
+        back = queue[:self.__in_TailPointIdx]
+        front = queue[self.__in_TailPointIdx:]
+        return front + back #넣은 순서대로 있는 리스트가 반환
+
 
     def isEmpty(self) -> bool:
         return self.__in_HeadPointIdx == self.__in_TailPointIdx
@@ -122,5 +133,7 @@ if __name__ == "__main__":
     queue2 = QueueLT(20, "Example")
     print(queue2.getQueue())
 
-    queue3 = QueueLT(100, "Ex")
-    print(queue3.getQueue())
+    print(queue2.getList())
+
+    # queue3 = QueueLT(100, "Ex")
+    # print(queue3.getQueue())

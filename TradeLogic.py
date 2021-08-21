@@ -119,7 +119,7 @@ class TradeLogic:
             }
             self.push_queue(dict_BuyRequest)
             self.log.INFO("Buy Request Pushed", dict_BuyRequest)
-            #거래 일자 갱신 7월21일 -> 21
+            #거래 일자 갱신 2021년 7월20일 -> 07/20/21
             #큐는 들어갔어도 거래가 실패할 수도 있는데 미리 초기화를 해 주는 이유는 거래가 안되었으면 어짜피 파는 조건문은 실행 안될 것이기 때문
             cls_TargetStock.day_bought = n_TodayDate
         #------------------사는 로직 끝------------------
@@ -194,6 +194,9 @@ class TradeLogic:
         # 기본 로직 - MACD 오실레이터 (3일 지수이동평균, 7일 지수이동평균)사용함
 
 #------------------여기에 각자 거래 로직 구현하세요------------------
+
+
+
 
     #스레드에서 호출되는 함수(전체 로직이 호출되어야 함)
     def show_me_the_money(self):

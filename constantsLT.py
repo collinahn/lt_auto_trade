@@ -33,7 +33,11 @@ DB_SHARED_PATH = './db/shared.sqlite3'
 
 STOCK_VALUE_QUEUE_SIZE = 20
 
-STOCK_TRADING_VOLUME_QUEUE_SIZE = 20
+# STOCK_TRADING_VOLUME_QUEUE_SIZE = 20
+
+# PRICE_DATA = 100
+
+STOCK_COMMON_SIZE = 64
 
 SM_UPDATE_PERIOD = 60
 
@@ -52,5 +56,7 @@ REQUEST_QUEUE_SIZE = 128
 LOGIC_OPTION = { "LarryWilliams", "CandleTrade" }
 
 TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
+
+MFI_STANDARD = 14
 
 #-----------Trade------------
