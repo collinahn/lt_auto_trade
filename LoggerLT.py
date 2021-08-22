@@ -90,6 +90,11 @@ class Logger:
         ret = ''.join(str(word) + ' ' for word in message)
         cls.__logger.critical(ret, stacklevel=const.STACK_LV)
 
+    #logLv 10(debug) 20 30 40 50(critical)
+    @classmethod
+    def set_log_lv(cls, logLv: int):
+        if logLv in {10, 20, 30, 40, 50}:
+            cls.fileHandler.setLevel(logLv)
 
 if __name__ == "__main__":
     log = Logger()

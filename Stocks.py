@@ -153,13 +153,13 @@ class Stock(object):
         return self.__iq_PriceDataQueue
 
     #평균가격
-    def tp(self, dict_Price: dict) -> float:
+    def _tp(self, dict_Price: dict) -> float:
         return (dict_Price["highest"] + dict_Price["lowest"] + dict_Price["end"]) / 3
 
     #tp * 거래량
     #역순정렬이라 전일 평균거래가는 nthDate+1을 본다.
     #tp가 양이면 true, 아니면 false를 덧붙여 반환한다.
-    def rmf(self, nthDate: int):
+    def _rmf(self, nthDate: int):
         # 최근 순으로 14개를 계산할 거임. 이때 두 리스트의 크기는 14보다 커야한다.
         # 사이즈 커지면 오래걸릴텐데,,, 미리 계산을 끝내놓을 수 없나?
         lst_priceData = self.__iq_PriceDataQueue.getList().reverse()
@@ -170,10 +170,10 @@ class Stock(object):
             raise ValueError
 
         bRet = False
-        if self.tp(lst_priceData[nthDate]) > self.tp(lst_priceData[nthDate+1]): #전일보다 큼: 양의 tp
+        if self._tp(lst_priceData[nthDate]) > self._tp(lst_priceData[nthDate+1]): #전일보다 큼: 양의 tp
             bRet = True
 
-        return self.tp(lst_priceData[nthDate])*lst_volume[nthDate], bRet
+        return self._tp(lst_priceData[nthDate])*lst_volume[nthDate], bRet
 
     # MFR = 14 일간 양의 RMF/14일간 음의 RMF
     def mfr(self) -> float:
@@ -181,13 +181,13 @@ class Stock(object):
         neg_rmf = 0
 
         for idx in range(const.MFI_STANDARD):
-            rmf, bSign = self.rmf(idx)
+            rmf, bSign = self._rmf(idx)
             if bSign == True:
                 pos_rmf += rmf
             else:
                 neg_rmf += rmf
 
-        return (pos_rmf / neg_rmf) if neg_rmf is not 0 else -1
+        return (pos_rmf / neg_rmf) if neg_rmf != 0 else -1
 
     # MFI = 100 − (100 / 1+ MFR​)
     @property
@@ -199,7 +199,7 @@ class Stock(object):
             return -1
         except Exception as e:
             self.log.ERROR(e)
-            return -1
+            return -100
 
     @name.setter
     def name(self, sName: str) -> None:

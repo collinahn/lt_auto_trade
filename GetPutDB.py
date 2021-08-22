@@ -114,13 +114,13 @@ class GetPutDB(object):
 
     #최초 실행시 db 칼럼을 초기화한다.
     def add_property_column(self, nStockID: int) -> bool:
-        obj_Instance = self.__shared_mem.get_instance(nStockID)
-        s_Name = obj_Instance.name
-        n_Quantity = obj_Instance.quantity
-        n_Value = obj_Instance.price
-        s_Time = obj_Instance.updated_time
-
         try:
+            obj_Instance = self.__shared_mem.get_instance(nStockID)
+            s_Name = obj_Instance.name
+            n_Quantity = obj_Instance.quantity
+            n_Value = obj_Instance.price
+            s_Time = obj_Instance.updated_time
+
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
             curs = con.cursor()

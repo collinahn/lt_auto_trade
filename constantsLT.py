@@ -18,6 +18,12 @@ LOG_PATH = './log/log.txt'
 
 STACK_LV = 3
 
+LV_DEBUG    = 10
+LV_INFO     = 20
+LV_WARNING  = 30
+LV_ERROR    = 40
+LV_CRITICAL = 50
+
 #-----------Logger--------
 
 

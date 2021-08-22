@@ -53,11 +53,12 @@ class SharedMem(object):
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
         self.__mdict_MstObject[nKey] = Stock(nKey)
+        print(self.__mdict_MstObject)
+
+        self.log.INFO("New Stock Instance:", nKey)
 
         self.cls_DB.add_property_column(nKey)
         self.cls_DB.update_stock_tracking_info(nKey)
-        
-        self.log.INFO("New Stock Instance:", nKey)
 
     def delete(self, nKey: int) -> None:
         try:
