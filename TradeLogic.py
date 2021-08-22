@@ -5,7 +5,7 @@
 
 import time
 
-from PyQt5.sip import wrapinstance
+# from PyQt5.sip import wrapinstance
 from LoggerLT import Logger
 from SharedMem import SharedMem
 from utilsLT import QueueLT

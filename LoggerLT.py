@@ -38,6 +38,16 @@ class Logger:
     def __new__(cls):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
+
+        #     cls.__debuglog = logging.getLogger("debug")
+        #     cls.__debuglog.setLevel(logging.DEBUG)
+        #     cls.debugformatter = logging.Formatter('%(asctime)s [%(filename)s:%(funcName)s:%(lineno)s] [%(levelname)s] >> %(message)s')
+        #     cls.debugstreamHandler = logging.StreamHandler()
+        #     cls.debugstreamHandler.setFormatter(cls.debugformatter)
+        #     cls.__debuglog.addHandler(cls.debugstreamHandler)
+
+        # cls.__debuglog.info(str(cls._instance), stacklevel=const.STACK_LV_OBJ)
+
         return cls._instance
 
   
@@ -72,8 +82,13 @@ class Logger:
 
     @classmethod
     def INFO(cls, *message):
+        if len(message) == 1 and "object" in str(message[0]):
+            stacklv = const.STACK_LV_OBJ
+        else:
+            stacklv = const.STACK_LV
+
         ret = ''.join(str(word) + ' ' for word in message)
-        cls.__logger.info(ret, stacklevel=const.STACK_LV)
+        cls.__logger.info(ret, stacklevel=stacklv)
 
     @classmethod
     def WARNING(cls, *message):
@@ -95,6 +110,10 @@ class Logger:
     def set_log_lv(cls, logLv: int):
         if logLv in {10, 20, 30, 40, 50}:
             cls.fileHandler.setLevel(logLv)
+
+    @staticmethod
+    def getInstance():
+        return Logger()
 
 if __name__ == "__main__":
     log = Logger()

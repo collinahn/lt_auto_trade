@@ -45,6 +45,9 @@ class RunThread(object):
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
+            self.cls_SM = SharedMem()
+            self.cls_DB = GetPutDB(self.cls_SM)
+            self.cls_TL = TradeLogic()
 
             #키움 초기화 및 로그인 처리
             # self.qapp = QApplication(sys.argv)
@@ -60,12 +63,12 @@ class RunThread(object):
     # 추후 db 새로운 테이블을 생성해 업데이트 예정 
     # 이것보다 좋은 방법이 있을텐데....
     def initialize_info_timer(self):
-        cls_SM = SharedMem()
+        # cls_SM = SharedMem()
 
         while True:
             #최초 실행시 하루 단위 타이머를 실행시키고 반복문을 벗어난다.
             if datetime.now().hour > 18:
-                Timer(const.SECONDS_DAY, cls_SM.init_after_market_closed()).start()
+                Timer(const.SECONDS_DAY, self.cls_SM.init_after_market_closed()).start()
                 break
 
             time.sleep(const.LONG_SLEEP_TIME)
@@ -74,16 +77,16 @@ class RunThread(object):
     #sharedMem 업데이트하고 바로 DB 업데이트하는 함수 호출, 60초에 한번
     def update_info(self):
         t_LastUpdated = datetime.now().timestamp()
-        cls_SM = SharedMem()
-        cls_DB = GetPutDB()
+        # cls_SM = SharedMem()
+        # cls_DB = GetPutDB(cls_SM)
 
         self.log.INFO("thread start")
 
         while True:
             t_Now = datetime.now().timestamp()
             if t_Now - t_LastUpdated > const.SM_UPDATE_PERIOD:
-                cls_SM.update_all()
-                cls_DB.update_properties()
+                self.cls_SM.update_all()
+                self.cls_DB.update_properties()
 
                 t_LastUpdated = datetime.now().timestamp()
             
@@ -91,11 +94,11 @@ class RunThread(object):
             
     #매매의사결정 함수 호출
     def call_price(self):
-        cls_TL = TradeLogic()
+        # cls_TL = TradeLogic()
 
         self.log.INFO("thread start")
 
-        cls_TL.show_me_the_money()
+        self.cls_TL.show_me_the_money()
     
     #의사결정 스레드의 주문대로 api호출하여 주문한다.
     def trade_stocks(self):

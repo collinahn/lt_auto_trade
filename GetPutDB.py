@@ -4,12 +4,12 @@
 # 나중에 mariaDB나 mySQL로 scale up 해서 이 파일만 교체해도 될듯
 #
 # 2021.08.04 created by taeyoung
+# 2021.08.23 modified by taeyoung sharedMem 모듈과 상호 import 하고 있어서 오류나던 문제 초기화시 SharedMem인스턴스를 넣어 초기화하도록 변경
 # 
 
 import sqlite3
 from datetime import datetime
 import constantsLT as const
-from SharedMem import SharedMem
 from LoggerLT import Logger
 
 class GetPutDB(object):
@@ -21,13 +21,16 @@ class GetPutDB(object):
         cls.log.INFO(cls._instance)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, *args):
         cls = type(self)
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
             self.__db_path = const.DB_SHARED_PATH
-            self.__shared_mem = SharedMem()
+
+            for arg in args:
+                if "SharedMem" in str(type(arg)):
+                    self.__shared_mem = arg
 
             self.log.INFO("GetPutDB init")
 

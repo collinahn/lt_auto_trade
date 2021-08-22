@@ -5,6 +5,7 @@
 # 싱글턴으로 생성됨.
 
 # 2021.08.01 created by taeyoung
+# 2021.08.23 modified by taeyoung GetPutDB 모듈과 상호 import 하고 있어서 오류나던 문제 -> GetPutDb 초기화시 SharedMem인스턴스를 넣어 초기화하도록 변경
 
 # m: 클래스 멤버 변수
 # i : 인스턴스 변수
@@ -15,6 +16,7 @@ from Stocks import Stock
 from LoggerLT import Logger
 from utilsLT import QueueLT
 import constantsLT as const
+from GetPutDB import GetPutDB
 
 
 class SharedMem(object):
@@ -37,11 +39,13 @@ class SharedMem(object):
 
             self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
-            from GetPutDB import GetPutDB
-            self.cls_DB = GetPutDB()
+            self.cls_DB = GetPutDB(self)
 
             self.log.INFO("SharedMem init:", self.__il_AccountInfo)
 
+    @staticmethod
+    def getInstance():
+        return SharedMem()
 
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
@@ -53,7 +57,6 @@ class SharedMem(object):
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
         self.__mdict_MstObject[nKey] = Stock(nKey)
-        print(self.__mdict_MstObject)
 
         self.log.INFO("New Stock Instance:", nKey)
 
@@ -72,10 +75,12 @@ class SharedMem(object):
 
     #종목을 보유 중인지 확인한다
     def check_possess(self, nKey: int) -> bool:
+        self.log.DEBUG(self.__mdict_MstObject)
         return nKey in self.__mdict_MstObject
 
     #인스턴스를 반환한다.
     def get_instance(self, nKey: int) -> object:
+        self.log.DEBUG(self.__mdict_MstObject)
         if self.check_possess(nKey) == True:
             return self.__mdict_MstObject[nKey]
         else:
@@ -202,6 +207,9 @@ class SharedMem(object):
 
 if __name__ == "__main__":
     list_r = [101,1010,1010100]
+    # _sm1 = SharedMem()
+    # _sm2 = SharedMem()
+    # _sm3 = SharedMem()
     sm = SharedMem(list_r)
     sm.add(100011)
     sm.add(100111)
