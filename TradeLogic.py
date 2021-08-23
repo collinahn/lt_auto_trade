@@ -2,6 +2,7 @@
 # 싱글턴으로 동작하며 스레드로 동작하고 공유메모리 큐에 매수/매도 수량을 저장한다.
 
 # 2021.08.12 created by taeyoung
+# 2021.08.18 modified by chanhyeok (종가베팅방법 추가)
 
 import time
 
@@ -129,7 +130,63 @@ class TradeLogic:
         return True
 
 
-#------------------여기에 각자 거래 로직 구현하세요------------------
+
+#------------------종가베팅 거래 로직 구현------------------
+
+    def Closing_Price(self, nStockID: int) -> bool:
+        cls_TargetStock = self.iq_SharedMem.get_instance(nStockID)
+        n_PriceNow = cls_TargetStock.price
+        n_PriceBought = cls_TargetStock.price_bought
+        n_TodayDate = time.strftime("%x", time.localtime(time.time())) # 08/20/21
+        dict_DayBefore = cls_TargetStock.price_data_before
+
+        #-------------파는 로직------------------
+        #   1%이상 수익나면 다음날 바로 매도(일부만 파는 방법)
+        if cls_TargetStock.quantity > 0 and float(n_PriceNow/n_PriceBought) - 1 >= 0.01:
+            if cls_TargetStock.johnber == True:
+                dict_SellRequest = { 
+                "StockID":nStockID,
+                "TradeOption":cls_TargetStock.trade_option,
+                "JohnBer":cls_TargetStock.johnber,
+                "Buy":0,
+                "Sell":cls_TargetStock.quantity//2
+                }
+                self.log.INFO("Johnber Executed", "Remain_Quantity:", cls_TargetStock.quantity//2)
+            else:
+                dict_SellRequest = { 
+                "StockID":nStockID,
+                "TradeOption":cls_TargetStock.trade_option,
+                "JohnBer":cls_TargetStock.johnber,
+                "Buy":0,
+                "Sell":cls_TargetStock.quantity
+                }
+
+            self.push_queue(dict_SellRequest)
+            self.log.INFO("Sell Request Pushed", dict_SellRequest)
+
+        #------------------파는 로직 끝------------------
+
+        #-------------사는 로직------------------
+        #종가베팅 유의점 (1) 미국장 악재 고려해 금요일, 공휴일 전날 피하기 (2)주식 증거금 100%피하기
+        #사는 로직
+        #1. 주식시장이 끝나면 당일거래상위 증100제외 거래량 상위1~40위에서 장대양봉 뽑음 (조건식을 이용해야할 것 같음.)
+        #2. 현재가가 전날 종가보다 낮은 가격O 
+        if dict_DayBefore["start"] < dict_DayBefore["end"] \
+        and dict_DayBefore["end"] > n_PriceNow:
+        #전날 거래량 대비 거래량이 60%이상 감소
+        #당일 3분봉 차트에서 20이동평균선을 관찰 (어떻게 구현할지 막힘...)
+           
+            dict_BuyRequest = { 
+                "StockID":nStockID,
+                "TradeOption":cls_TargetStock.trade_option,
+                "JohnBer":cls_TargetStock.johnber,
+                "Buy":10, #10%(미정)
+                "Sell":0
+            }
+            self.push_queue(dict_BuyRequest)
+            self.log.INFO("Buy Request Pushed", dict_BuyRequest)
+            
+        #------------------사는 로직 끝------------------
 
 # 14일간의 당일 고가, 저가, 종가의 평균을 n_tp에 저장 후, 그 당일 거래량과 곱한다
 # MFR = 14 일간 양의 RMF/14일간 음의 RMF​

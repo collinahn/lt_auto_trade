@@ -13,6 +13,8 @@
 
 ## written by: ChanHyeok Jeon
 # 2021-08-14 조건검색식 함수 update(미완)
+# 2021-08-22 Queue에 있는 정보를 바탕으로 실제로 API에 매수/매도 요청을 보내는 함수 작성
+# 2021-08-23 Queue함수 간략하게 작성(보완 필요)
 
 
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
@@ -22,6 +24,8 @@ from LoggerLT import Logger
 from KiwoomAPI import KiwoomAPI
 from PyQt5.QtWidgets import QApplication
 from TR_Code import output_list
+from utilsLT import QueueLT
+from SharedMem import SharedMem
 
 class KiwoomMain:
     def __new__(cls):
@@ -235,3 +239,26 @@ if __name__ == "__main__":
     # api_con.Not_Signed_Account('8005204311')
     # api_con.Stock_Buy_Update('035720', '8005204311', 1, 141000, '179567')
     # api_con.Stock_Buy_Cancel('035720', '8005204311', 1, '192233')
+
+
+    #queue에서 정보를 받아 실제 매수/매도를 진행하는 함수 (종목코드, 계좌정보, 매수/매도 수량)
+    def Get_Queue_BuySell(self):
+        q_waitingqueue = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
+        #현재 처리중인 항목
+        d_current = q_waitingqueue.getHead
+
+        #매수매도에 필요한 정보 입력
+        n_stockID = d_current["StockID"]
+        #n_accountnumber = self.kiwoom.Get_Login_data
+        #계좌번호: istr__account_list = self.dynamicCall("GetLoginInfo(Qstring)", "ACCLIST")
+        
+        #매수매도 진행
+        if d_current["Buy"] > d_current["Sell"]:
+            n_quantity = d_current["Buy"]
+            self.kiwoom.Stock_Buy_Marketprice( n_StockID , n_accountnumber, n_quantity)
+        else:
+            n_quantity = d_current["Sell"]
+            self.kiwoom.Stock_Sell_Marketprice( n_StockID, n_accountnumber, n_quantity)
+
+        #Queue포인터 옮김.
+        q_waitingqueue.pullQueue()
