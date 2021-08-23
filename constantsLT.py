@@ -60,7 +60,7 @@ LONG_SLEEP_TIME = 100
 
 REQUEST_QUEUE_SIZE = 128
 
-LOGIC_OPTION = { "LarryWilliams", "CandleTrade" }
+LOGIC_OPTION = { "LarryWilliams", "MFI", "ClosingPrice" "CandleTrade" }
 
 TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
 

@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import QApplication
 from TR_Code import output_list
 from utilsLT import QueueLT
 from SharedMem import SharedMem
+import constantsLT as const
 
 class KiwoomMain:
     def __new__(cls):
@@ -43,6 +44,8 @@ class KiwoomMain:
             self.kiwoom = KiwoomAPI()
             self.kiwoom.login()
 
+            self.lst_usr_info = [] #자체적으로 유저 정보를 갖고 있는다. 2021.08.23
+
             self.log.INFO("KiwoomMain init")
 
 # ----------- #
@@ -52,6 +55,7 @@ class KiwoomMain:
         istr_login_state = self.kiwoom.print_login_connect_state #
         istr__user_name, istr__user_id, istr__account_count, istr__account_list = self.kiwoom.login_info()
         list_login_data =  istr_login_state, istr__user_name, istr__user_id, istr__account_count, istr__account_list.rstrip(';')
+        self.lst_usr_info = list_login_data
         return list_login_data
 
     # OPT10085: 계좌수익률요청 
@@ -210,6 +214,32 @@ class KiwoomMain:
         self.kiwoom.SendOrder("매도정정", "0101", istr_account_number, 6, istr_stock_code, in_quantity, in_price, "00", istr_order_code)
 
 
+    #queue에서 정보를 받아 실제 매수/매도를 진행하는 함수 (종목코드, 계좌정보, 매수/매도 수량)
+    #함수 이름 변경 Get_Queue_BuySell -> Send_Request_BuySell 2021.08.23
+    def Send_Request_BuySell(self):
+        q_RequestFmLogic = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
+        #현재 처리중인 항목
+        dict_Target = q_RequestFmLogic.getHead
+
+        #매수매도에 필요한 정보 입력
+        n_stockID = dict_Target["StockID"]
+        n_accountnumber = self.lst_usr_info[-1] if "," in self.lst_usr_info[-1] else self.lst_usr_info[:8]
+        
+        #매수매도 진행
+        if dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
+            n_quantity = dict_Target["Buy"]
+            self.kiwoom.Stock_Buy_Marketprice( n_stockID , n_accountnumber, n_quantity)
+        elif dict_Target["Buy"] == 0 and dict_Target["Sell"] > 0:
+            n_quantity = dict_Target["Sell"]
+            self.kiwoom.Stock_Sell_Marketprice( n_stockID, n_accountnumber, n_quantity)
+
+        #Queue포인터 옮김.
+        q_RequestFmLogic.pullQueue()
+
+
+
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     api_con = KiwoomMain()
@@ -240,25 +270,3 @@ if __name__ == "__main__":
     # api_con.Stock_Buy_Update('035720', '8005204311', 1, 141000, '179567')
     # api_con.Stock_Buy_Cancel('035720', '8005204311', 1, '192233')
 
-
-    #queue에서 정보를 받아 실제 매수/매도를 진행하는 함수 (종목코드, 계좌정보, 매수/매도 수량)
-    def Get_Queue_BuySell(self):
-        q_waitingqueue = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
-        #현재 처리중인 항목
-        d_current = q_waitingqueue.getHead
-
-        #매수매도에 필요한 정보 입력
-        n_stockID = d_current["StockID"]
-        #n_accountnumber = self.kiwoom.Get_Login_data
-        #계좌번호: istr__account_list = self.dynamicCall("GetLoginInfo(Qstring)", "ACCLIST")
-        
-        #매수매도 진행
-        if d_current["Buy"] > d_current["Sell"]:
-            n_quantity = d_current["Buy"]
-            self.kiwoom.Stock_Buy_Marketprice( n_StockID , n_accountnumber, n_quantity)
-        else:
-            n_quantity = d_current["Sell"]
-            self.kiwoom.Stock_Sell_Marketprice( n_StockID, n_accountnumber, n_quantity)
-
-        #Queue포인터 옮김.
-        q_waitingqueue.pullQueue()

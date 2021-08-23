@@ -29,18 +29,18 @@ class TradeLogic:
         if not hasattr(cls, "_init"):
             cls._init = True
 
-            self.iq_SharedMem = SharedMem()
+            self.cls_SM = SharedMem()
 
             self.log.INFO("TradeLogic init")
 
     def print_queue(self):
-        print(self.iq_SharedMem.iq_RequestQueue)
-        print(self.iq_SharedMem.iq_RequestQueue.getHead())
+        print(self.cls_SM.iq_RequestQueue)
+        print(self.cls_SM.iq_RequestQueue.getHead())
 
     # 요청 형식을 푸시한다
     def push_queue(self, dictRequestFormat: dict):
         #파이썬스럽지 않은 코드인데 누가 파이썬스럽게 고쳐줄사람 2021.08.12 by aty
-        while self.iq_SharedMem.iq_RequestQueue.pushQueue(dictRequestFormat) == False:
+        while self.cls_SM.iq_RequestQueue.pushQueue(dictRequestFormat) == False:
             #큐가 꽉 차서 와일 내부 문장이 실행된다면, 처리될 때까지 잠시 기다린다.
             time.sleep(0.1)
             
@@ -51,12 +51,12 @@ class TradeLogic:
         #self.iq_SharedMem에서 필요한 데이터를 종합해 살지 말지 결정하고 몇 주 살건지 결정, dict형으로 매수/매도할 때 필요한 정보 전달
 
         #보유 수량이 0보다 크면 팔 궁리부터
-        if self.iq_SharedMem.get_instance(nStockID).quantity > 0:
+        if self.cls_SM.get_instance(nStockID).quantity > 0:
             #파는 로직 구현부
             dict_SellRequest = { 
             "StockID":nStockID,
             "TradeOption":0,
-            "JohnBer":self.iq_SharedMem.get_instance(nStockID).johnber,
+            "JohnBer":self.cls_SM.get_instance(nStockID).johnber,
             "Buy":0,
             "Sell":10 #보유수량보다 작거나 같게
             }
@@ -70,7 +70,7 @@ class TradeLogic:
         dict_BuyRequest = { 
             "StockID":nStockID,
             "TradeOption":0,
-            "JohnBer":self.iq_SharedMem.get_instance(nStockID).johnber,
+            "JohnBer":self.cls_SM.get_instance(nStockID).johnber,
             "Buy":10,
             "Sell":0
         }
@@ -80,7 +80,7 @@ class TradeLogic:
 
 
     def Larry_Williams(self, nStockID: int) -> bool:
-        cls_TargetStock = self.iq_SharedMem.get_instance(nStockID)
+        cls_TargetStock = self.cls_SM.get_instance(nStockID)
         n_PriceNow = cls_TargetStock.price
         n_PriceBought = cls_TargetStock.price_bought
         n_TodayDate = time.strftime("%x", time.localtime(time.time())) # 08/15/21
@@ -134,7 +134,7 @@ class TradeLogic:
 #------------------종가베팅 거래 로직 구현------------------
 
     def Closing_Price(self, nStockID: int) -> bool:
-        cls_TargetStock = self.iq_SharedMem.get_instance(nStockID)
+        cls_TargetStock = self.cls_SM.get_instance(nStockID)
         n_PriceNow = cls_TargetStock.price
         n_PriceBought = cls_TargetStock.price_bought
         n_TodayDate = time.strftime("%x", time.localtime(time.time())) # 08/20/21
@@ -197,8 +197,8 @@ class TradeLogic:
 # 거기서 연산된 값을 가져오는게 더 좋을거같다..
 
     def Money_Flow_Index(self, nStockID):
-        cls_TargetStock = self.iq_SharedMem.get_instance(nStockID)
-        cls_AccountInfo = self.iq_SharedMem.get_usr_info()
+        cls_TargetStock = self.cls_SM.get_instance(nStockID)
+        cls_AccountInfo = self.cls_SM.get_usr_info()
         n_TodayDate = time.strftime("%x", time.localtime(time.time()))
         n_mfi = cls_TargetStock.mfi
         now = datetime.now()
@@ -248,25 +248,29 @@ class TradeLogic:
 
     #스레드에서 호출되는 함수(전체 로직이 호출되어야 함)
     def show_me_the_money(self):
-        cls_SM = SharedMem()
+        t_LastExecMFI = datetime.now().timestamp()
+
         while True:
 
-            for key, value in cls_SM.get_shared_mem():
+            for key, value in self.cls_SM.get_shared_mem():
                 #사용하는 이름은 무조건 constantsLT 파일에 등록이 되어있고 Stock인스턴스에 속성으로 초기화를 시켜줘야한다.
-                if value.trade_option not in const.LOGIC_OPTION:
+                if value.logic_option not in const.LOGIC_OPTION:
                     time.sleep(1)
                     continue
-
-                if value.trade_option == 'LarryWilliams':
+                
+                if value.logic_option == 'LarryWilliams':
                     self.Larry_Williams(key)
 
-                #sharedMem 가져와서 어떤 옵션인지 확인하고 해당 종목 인스턴스로 해당 함수 실행
-                elif value.trade_option == 'CandleTrade':
-                    pass
+                #MFI 옵션은 1시간에 1번만 실행
+                elif value.logic_option == 'MFI':
+                    t_Now = datetime.now().timestamp()
+                    if t_Now - t_LastExecMFI > 3600:
+                        self.Money_Flow_Index(key)
 
-                elif value.trade_option == 'CoolTradeOption':
-                    pass
+                        t_LastExecMFI = datetime.now().timestamp()
 
+                elif value.logic_option == 'ClosingPrice':
+                    self.Closing_Price(key)
 
             time.sleep(1)
             

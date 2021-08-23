@@ -45,9 +45,6 @@ class RunThread(object):
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
-            self.cls_SM = SharedMem()
-            self.cls_DB = GetPutDB(self.cls_SM)
-            self.cls_TL = TradeLogic()
 
             #키움 초기화 및 로그인 처리
             # self.qapp = QApplication(sys.argv)
@@ -55,7 +52,10 @@ class RunThread(object):
             
             #유저 정보를 받아와서 공유메모리 초기화
             # lst_usr_info = self.kapi.Get_Login_Info()
-            # self.__shared_mem = SharedMem(lst_usr_info)
+            # self.cls_SM = SharedMem(lst_usr_info)
+
+            self.cls_DB = GetPutDB(self.cls_SM)
+            self.cls_TL = TradeLogic()
 
             self.log.INFO("RunThread init")
 
@@ -100,9 +100,15 @@ class RunThread(object):
 
         self.cls_TL.show_me_the_money()
     
-    #의사결정 스레드의 주문대로 api호출하여 주문한다.
+    #의사결정 스레드의 요청대로 api호출하여 주문한다.
+    #1초에 최대 4번까지 처리가 가능하다.
     def trade_stocks(self):
         # cls_KW = KiwoomMain() # Kiwoom관련 클래스를 싱글턴으로 만들고, 그 후 스레드로 호출할 메소드 있어야함
+        
+        while True:
+
+            # self.cls_KW.Send_Request_BuySell()
+            time.sleep(1)
 
         self.log.INFO("thread start")
 
