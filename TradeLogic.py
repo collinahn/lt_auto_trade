@@ -9,7 +9,9 @@ import time
 from LoggerLT import Logger
 from SharedMem import SharedMem
 from utilsLT import QueueLT
+from datetime import datetime
 import constantsLT as const
+
 
 class TradeLogic:
     
@@ -129,16 +131,6 @@ class TradeLogic:
 
 #------------------여기에 각자 거래 로직 구현하세요------------------
 
-    def Money_Flow_Index(self, nStockID):
-        cls_TargetStock = self.iq_SharedMem.get_instance(nStockID)
-        n_TodayDate = time.strftime("%x", time.localtime(time.time()))
-        list_pos_mfr = [] # mfr이 양수인 날들의 값 저장
-        list_neg_mfr = [] # mfr이 음수인 날들의 값 저장
-        n_day_highest = 0 # 원하는 날의 고가
-        n_day_lowest = 0 # 원하는 날의 저가
-        n_day_end = 0 # 원하는 날의 종가
-        n_day_tradevolume = 0 # 원하는 날의 거래량
-
 # 14일간의 당일 고가, 저가, 종가의 평균을 n_tp에 저장 후, 그 당일 거래량과 곱한다
 # MFR = 14 일간 양의 RMF/14일간 음의 RMF​
 # MFI = 100 − (100 / 1+ MFR​)
@@ -147,42 +139,43 @@ class TradeLogic:
 # 아니면 아예 rmf, mfr를 구하는 식이 stocks.py에 저장되면 더 좋을 수도.. 굳이 여기서 연산하는거보다
 # 거기서 연산된 값을 가져오는게 더 좋을거같다..
 
-        for _ in range(14):
-            n_tp = (n_day_highest + n_day_lowest + n_day_end)/3
-            n_rmf = n_tp * n_day_tradevolume
+    def Money_Flow_Index(self, nStockID):
+        cls_TargetStock = self.iq_SharedMem.get_instance(nStockID)
+        cls_AccountInfo = self.iq_SharedMem.get_usr_info()
+        n_TodayDate = time.strftime("%x", time.localtime(time.time()))
+        n_mfi = cls_TargetStock.mfi
+        now = datetime.now()
+        n_investmoney = 0 # 초기 자본 (초기 투자 금액) <- 이 정보가 저장이 되어있나? 안되어있는거같긴한데.. 다른방법을 고안해봐야할듯..
 
-            if n_rmf >= 0:
-                list_pos_mfr.append(n_rmf)
-            else:
-                list_neg_mfr.append(n_rmf)
-            
-        n_mfr = sum(list_pos_mfr)/sum(list_neg_mfr)
-        n_mfi = 100 - 100/(1+n_mfr)
+        if cls_AccountInfo['current_cash'] >= n_investmoney*0.2: # 최소 초기 자본 20% 이상이 있어야 거래 진행, cls_AccountInfo['current_cash'] = 계좌정보에서의 예수금 (현재 보유 현금)
+            #------------------사는 로직 ------------------------------
+            if 0 <= n_mfi <= 30: #과매도 상태
+                if 9 <= now.hour <= 15 and now.minute == 0 and now.second%60 == 0: # 매 시각 정각에만 매수 (계속 과매수상태여도 한시간에 한번만 매수한다) <- 의도는 그렇긴한데.. 쉽지않네
+                    dict_BuyRequest = { 
+                        "StockID":nStockID,
+                        "TradeOption":cls_TargetStock.trade_option,
+                        "Buy":10, #보유금액 10%정도? 못정했다.
+                        "Sell":0
+                    }
+                    self.push_queue(dict_BuyRequest)
+                    self.log.INFO("Buy Request Pushed", dict_BuyRequest)
 
-        #------------------사는 로직 ------------------------------
-        if n_mfi <= 30 or cls_TargetStock.trade_option == 'Buy': #과매도 상태
-            dict_BuyRequest = { 
+            #------------------파는 로직 ------------------------------
+            if n_mfi >= 70 and cls_TargetStock.quantity > 0: #과매수 상태
+                dict_SellRequest = { 
                 "StockID":nStockID,
                 "TradeOption":cls_TargetStock.trade_option,
-                "Buy":10, #보유금액 10%정도? 못정했다.
-                "Sell":0
-            }
-            self.push_queue(dict_BuyRequest)
-            self.log.INFO("Buy Request Pushed", dict_BuyRequest)
-            time.sleep(3600)
+                "Buy":0,
+                "Sell":cls_TargetStock.quantity
+                }
+                self.push_queue(dict_SellRequest)
+                self.log.INFO("Sell Request Pushed", dict_SellRequest)
 
-        #------------------파는 로직 ------------------------------
-        if n_mfi >= 70 or cls_TargetStock.trade_option == 'Sell': #과매수 상태
-            dict_SellRequest = { 
-            "StockID":nStockID,
-            "TradeOption":cls_TargetStock.trade_option,
-            "Buy":0,
-            "Sell":cls_TargetStock.quantity
-            }
-            self.push_queue(dict_SellRequest)
-            self.log.INFO("Sell Request Pushed", dict_SellRequest)
-            time.sleep(3600)
-
+            else: # mfi < 0 일 경우
+                self.log.INFO("error occured", n_mfi)
+        else:
+            self.log.INFO("최소 현금 보유금액을 유지하기 위해 거래 중지")
+            
 #--------- 아래는 무시 바람------------------#
 
         # n_exp_moving_average_12 = 0 #3일 지수이동평균(EMA) = (((금일 종가 x 2/(1+n)) + (전 EMA x (1 - 2/(1+n)))) n은 몇일 기준인지
@@ -194,8 +187,6 @@ class TradeLogic:
         # 기본 로직 - MACD 오실레이터 (3일 지수이동평균, 7일 지수이동평균)사용함
 
 #------------------여기에 각자 거래 로직 구현하세요------------------
-
-
 
 
     #스레드에서 호출되는 함수(전체 로직이 호출되어야 함)
