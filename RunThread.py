@@ -14,6 +14,7 @@
 # 2021.08.02 created by 태영
 
 
+from SendRequest2Api import SendRequest2Api
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL) # ctrl + c로 종료할 수 있도록
 
@@ -22,9 +23,8 @@ import time
 from threading import Thread, Timer
 import constantsLT as const
 from datetime import datetime
-# from PyQt5.QtWidgets import QApplication
-# from KiwoomAPI import KiwoomAPI
-# from KiwoomMain import KiwoomMain
+from PyQt5.QtWidgets import QApplication
+from KiwoomMain import KiwoomMain
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
 from TradeLogic import TradeLogic
@@ -47,21 +47,22 @@ class RunThread(object):
             # if문 내부에서 초기화 진행
 
             #키움 초기화 및 로그인 처리
-            # self.qapp = QApplication(sys.argv)
-            # self.kapi = KiwoomMain()
+            self.qapp = QApplication(sys.argv)
+            self.cls_KM = KiwoomMain()
             
             #유저 정보를 받아와서 공유메모리 초기화
-            # lst_usr_info = self.kapi.Get_Login_Info()
-            # self.cls_SM = SharedMem(lst_usr_info)
+            lst_usr_info = self.cls_KM.Get_Login_Info()
+            self.cls_SM = SharedMem(lst_usr_info)
+            self.cls_SR = SendRequest2Api(lst_usr_info)
 
             self.cls_DB = GetPutDB(self.cls_SM)
             self.cls_TL = TradeLogic()
+            
 
             self.log.INFO("RunThread init")
 
     # 장마감 이후 18:00에 오늘의 정보로 공유메모리 인스턴스 내부의 정보 업데이트
     # 추후 db 새로운 테이블을 생성해 업데이트 예정 
-    # 이것보다 좋은 방법이 있을텐데....
     def initialize_info_timer(self):
         # cls_SM = SharedMem()
 
@@ -103,14 +104,11 @@ class RunThread(object):
     #의사결정 스레드의 요청대로 api호출하여 주문한다.
     #1초에 최대 4번까지 처리가 가능하다.
     def trade_stocks(self):
-        # cls_KW = KiwoomMain() # Kiwoom관련 클래스를 싱글턴으로 만들고, 그 후 스레드로 호출할 메소드 있어야함
         
-        while True:
-
-            # self.cls_KW.Send_Request_BuySell()
-            time.sleep(1)
-
         self.log.INFO("thread start")
+        
+        self.cls_SR.Send_Request_Throttle()
+
 
 
     #스레드들을 가동한다.

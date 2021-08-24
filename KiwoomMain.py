@@ -24,9 +24,6 @@ from LoggerLT import Logger
 from KiwoomAPI import KiwoomAPI
 from PyQt5.QtWidgets import QApplication
 from TR_Code import output_list
-from utilsLT import QueueLT
-from SharedMem import SharedMem
-import constantsLT as const
 
 class KiwoomMain:
     def __new__(cls):
@@ -44,8 +41,6 @@ class KiwoomMain:
             self.kiwoom = KiwoomAPI()
             self.kiwoom.login()
 
-            self.lst_usr_info = [] #자체적으로 유저 정보를 갖고 있는다. 2021.08.23
-
             self.log.INFO("KiwoomMain init")
 
 # ----------- #
@@ -55,7 +50,6 @@ class KiwoomMain:
         istr_login_state = self.kiwoom.print_login_connect_state #
         istr__user_name, istr__user_id, istr__account_count, istr__account_list = self.kiwoom.login_info()
         list_login_data =  istr_login_state, istr__user_name, istr__user_id, istr__account_count, istr__account_list.rstrip(';')
-        self.lst_usr_info = list_login_data
         return list_login_data
 
     # OPT10085: 계좌수익률요청 
@@ -212,30 +206,6 @@ class KiwoomMain:
     # 매도 정정 8.18 미완 // 8.19 완성
     def Stock_Sell_Update(self, istr_stock_code, istr_account_number, in_quantity, in_price, istr_order_code):
         self.kiwoom.SendOrder("매도정정", "0101", istr_account_number, 6, istr_stock_code, in_quantity, in_price, "00", istr_order_code)
-
-
-    #queue에서 정보를 받아 실제 매수/매도를 진행하는 함수 (종목코드, 계좌정보, 매수/매도 수량)
-    #함수 이름 변경 Get_Queue_BuySell -> Send_Request_BuySell 2021.08.23
-    def Send_Request_BuySell(self):
-        q_RequestFmLogic = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
-        #현재 처리중인 항목
-        dict_Target = q_RequestFmLogic.getHead
-
-        #매수매도에 필요한 정보 입력
-        n_stockID = dict_Target["StockID"]
-        n_accountnumber = self.lst_usr_info[-1] if "," in self.lst_usr_info[-1] else self.lst_usr_info[:8]
-        
-        #매수매도 진행
-        if dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
-            n_quantity = dict_Target["Buy"]
-            self.kiwoom.Stock_Buy_Marketprice( n_stockID , n_accountnumber, n_quantity)
-        elif dict_Target["Buy"] == 0 and dict_Target["Sell"] > 0:
-            n_quantity = dict_Target["Sell"]
-            self.kiwoom.Stock_Sell_Marketprice( n_stockID, n_accountnumber, n_quantity)
-
-        #Queue포인터 옮김.
-        q_RequestFmLogic.pullQueue()
-
 
 
 
