@@ -83,7 +83,8 @@ class Logger:
 
     @classmethod
     def INFO(cls, *message):
-        if len(message) == 1 and "object" in str(message[0]):
+        if (len(message) == 1 and "object" in str(message[0])) \
+            or (len(message) == 3 and "object" in str(message[2])): # 생성자 추적
             stacklv = const.STACK_LV_OBJ
         else:
             stacklv = const.STACK_LV

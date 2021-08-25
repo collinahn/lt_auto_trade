@@ -17,6 +17,7 @@ from LoggerLT import Logger
 from utilsLT import QueueLT
 import constantsLT as const
 from GetPutDB import GetPutDB
+# from KiwoomMain import KiwoomMain
 
 
 class SharedMem(object):
@@ -194,12 +195,27 @@ class SharedMem(object):
 
         self.log.INFO("Shared Memory Updated: Updated Time")
 
+    def push_update_request(self, queue4Request):
+        # queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
+
+        if queue4Request.isEmpty() == False:
+            for n_StockID in self.__mdict_MstObject.keys():
+                dct_InfoRequest = {
+                    "StockID": n_StockID,
+                    "Buy": -1,
+                    "Sell": -1
+                }
+                queue4Request.pushQueue(dct_InfoRequest)
+
+            self.log.INFO("Info Request Pushed", self.__mdict_MstObject.keys())
+
     #다른 스레드에서 이거 하나만 호출해도 된다.
-    def update_all(self):
-        self.update_current_stock_price()
-        self.update_average_price_bought()
-        self.update_current_stock_quantity()
-        self.update_last_updated()
+    def update(self, queue4Request):
+        self.push_update_request(queue4Request)
+        # self.update_current_stock_price()
+        # self.update_average_price_bought()
+        # self.update_current_stock_quantity()
+        # self.update_last_updated()
         
             
 

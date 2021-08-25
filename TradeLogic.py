@@ -6,7 +6,6 @@
 
 import time
 
-# from PyQt5.sip import wrapinstance
 from LoggerLT import Logger
 from SharedMem import SharedMem
 from utilsLT import QueueLT
@@ -260,7 +259,7 @@ class TradeLogic:
                 if value.logic_option == 'LarryWilliams':
                     self.Larry_Williams(key)
 
-                #MFI 옵션은 1시간에 1번만 실행
+                #MFI 옵션 매수는 1시간에 1번만 실행
                 elif value.logic_option == 'MFI':
                     t_Now = datetime.now().timestamp()
                     if t_Now - t_LastExecMFI > 3600:

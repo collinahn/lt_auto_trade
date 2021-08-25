@@ -14,6 +14,7 @@ from typing import List, Tuple
 import constantsLT as const
 from LoggerLT import Logger
 from utilsLT import QueueLT
+from datetime import datetime
 import time
 
 class Stock(object):
@@ -44,6 +45,8 @@ class Stock(object):
         # if {args[0]}.issubset(Stock.__mset_Stocks) == False:
         if args[0] not in Stock.__mset_Stocks:
             self.__in_Ticker = args[0]
+            self.__is_LogicOption = ""
+            self.__is_TradeOption = ""
             #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
             self.__is_StockName = ""
             self.__in_StockCurrentPrice = 0
@@ -52,14 +55,13 @@ class Stock(object):
             self.__in_StockQuantity = 0
             self.__iq_TotalTradeVolume = QueueLT(const.STOCK_COMMON_SIZE, "TradeVolumePerDay")
             self.__is_LastUpdated = ""
+            self.__is_LastAdded = str(datetime.now())
             self.__id_DayBought = time.strftime("%x", time.localtime(time.time())) #  08/15/21 거래된 날을 따저 추가적인 거래가 일어나지 않도록 한다.
             # self.__if_StockFluncDay = 0.0
             # self.__if_StockFluncHour = 0.0
             # self.__if_StockFlunc30Min = 0.0
             # self.__if_StockFlunc5Min = 0.0
-            self.__is_LogicOption = ""
             self.__ib_JohnBer = False
-            self.__is_TradeOption = ""
             self.__id_PriceDataBefore = {
                 "start":0,
                 "end":0,
@@ -118,6 +120,10 @@ class Stock(object):
     @property
     def updated_time(self) -> str:
         return self.__is_LastUpdated
+
+    @property
+    def last_added_time(self) -> str:
+        return self.__is_LastAdded
 
     @property
     def active_stock(self) -> int:

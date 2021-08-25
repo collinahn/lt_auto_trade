@@ -23,12 +23,13 @@ import time
 from threading import Thread, Timer
 import constantsLT as const
 from datetime import datetime
-from PyQt5.QtWidgets import QApplication
-from KiwoomMain import KiwoomMain
+# from PyQt5.QtWidgets import QApplication
+# from KiwoomMain import KiwoomMain
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
 from TradeLogic import TradeLogic
 from LoggerLT import Logger
+from utilsLT import QueueLT
 
 class RunThread(object):
 
@@ -47,13 +48,13 @@ class RunThread(object):
             # if문 내부에서 초기화 진행
 
             #키움 초기화 및 로그인 처리
-            self.qapp = QApplication(sys.argv)
-            self.cls_KM = KiwoomMain()
+            # self.qapp = QApplication(sys.argv)
+            # self.cls_KM = KiwoomMain()
             
             #유저 정보를 받아와서 공유메모리 초기화
-            lst_usr_info = self.cls_KM.Get_Login_Info()
-            self.cls_SM = SharedMem(lst_usr_info)
-            self.cls_SR = SendRequest2Api(lst_usr_info)
+            # lst_usr_info = self.cls_KM.Get_Login_Info()
+            self.cls_SM = SharedMem()#lst_usr_info)
+            self.cls_SR = SendRequest2Api()#lst_usr_info)
 
             self.cls_DB = GetPutDB(self.cls_SM)
             self.cls_TL = TradeLogic()
@@ -64,7 +65,6 @@ class RunThread(object):
     # 장마감 이후 18:00에 오늘의 정보로 공유메모리 인스턴스 내부의 정보 업데이트
     # 추후 db 새로운 테이블을 생성해 업데이트 예정 
     def initialize_info_timer(self):
-        # cls_SM = SharedMem()
 
         while True:
             #최초 실행시 하루 단위 타이머를 실행시키고 반복문을 벗어난다.
@@ -77,16 +77,15 @@ class RunThread(object):
 
     #sharedMem 업데이트하고 바로 DB 업데이트하는 함수 호출, 60초에 한번
     def update_info(self):
+        queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
         t_LastUpdated = datetime.now().timestamp()
-        # cls_SM = SharedMem()
-        # cls_DB = GetPutDB(cls_SM)
 
         self.log.INFO("thread start")
 
         while True:
             t_Now = datetime.now().timestamp()
             if t_Now - t_LastUpdated > const.SM_UPDATE_PERIOD:
-                self.cls_SM.update_all()
+                self.cls_SM.update(queue4Request)
                 self.cls_DB.update_properties()
 
                 t_LastUpdated = datetime.now().timestamp()
@@ -95,7 +94,6 @@ class RunThread(object):
             
     #매매의사결정 함수 호출
     def call_price(self):
-        # cls_TL = TradeLogic()
 
         self.log.INFO("thread start")
 

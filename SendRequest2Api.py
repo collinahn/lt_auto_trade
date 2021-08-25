@@ -8,7 +8,7 @@ from LoggerLT import Logger
 from SharedMem import SharedMem
 from utilsLT import QueueLT
 from datetime import datetime
-from KiwoomMain import KiwoomMain
+# from KiwoomMain import KiwoomMain
 import constantsLT as const
 
 
@@ -29,24 +29,26 @@ class SendRequest2Api:
 
             self.lst_usr_info = args
             self.cls_SM = SharedMem()
-            self.cls_KW = KiwoomMain()
+            # self.cls_KW = KiwoomMain()
 
             self.log.INFO("SendRequest2Api init")
 
     
-    
-    #queue에서 정보를 받아 실제 매수/매도를 진행하는 함수 (종목코드, 계좌정보, 매수/매도 수량)
-    #함수 이름 변경 Get_Queue_BuySell -> Send_Request_BuySell 2021.08.23
-    def Send_Request_BuySell(self, queue4Request) -> int:
+    #queue에서 정보를 받아 실제 정보요청/매수/매도요청을 진행하는 함수 (종목코드, 계좌정보, 매수/매도 수량)
+    #함수 이름 변경 Get_Queue_BuySell -> Send_Request 2021.08.23
+    def Send_Request(self, queue4Request) -> int:
         #현재 처리중인 항목
-        dict_Target = queue4Request.getHead
+        dict_Target = queue4Request.getHead()
 
         #매수매도에 필요한 정보 입력
         n_stockID = dict_Target["StockID"]
         n_accountnumber = self.lst_usr_info[-1] if "," in self.lst_usr_info[-1] else self.lst_usr_info[:8]
         
+
+        if dict_Target["Buy"] == -1 and dict_Target["Sell"] == -1:
+            self.cls_KW.Get_Basic_Stock_Info(str(n_stockID))
         #매수매도 진행
-        if dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
+        elif dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
             n_quantity = dict_Target["Buy"]
             self.cls_KW.Stock_Buy_Marketprice( n_stockID , n_accountnumber, n_quantity)
             queue4Request.pullQueue()
@@ -71,8 +73,14 @@ class SendRequest2Api:
         t_ThrottleTime = datetime.now().timestamp()
 
         while True:
+            #큐가 비어있다면 휴식
+            if q_RequestFmLogic.isEmpty() == True:
+                time.sleep(1)
+                continue
             
-            n_ApiCallCnt += self.Send_Request_BuySell(q_RequestFmLogic)
+            
+
+            n_ApiCallCnt += self.Send_Request(q_RequestFmLogic)
 
             #api 요청 횟수가 과도하다면 api를 통한 요청이 씹히므로 충분히 쉰다.
             #timestamp를 호출하는데 드는 비용을 생각하면 1초 미만의 시간을 주는 것이 맞지만 일단 1초 줌
@@ -82,6 +90,3 @@ class SendRequest2Api:
                     time.sleep(1)
                 t_ThrottleTime = datetime.now().timestamp()
 
-            #큐가 비어있다면 휴식
-            if q_RequestFmLogic.isEmpty() == True:
-                time.sleep(1)
