@@ -26,10 +26,10 @@ class KiwoomAPI(QAxWidget):
         # 초기 작업 
         self.set_kiwoom_api() 
         self.set_event_slot()
-        self.rq_data = {}
-        self.output_list = []
+        self.mdict_rq_data = {}
+        self.mlist_output = []
         self.mlist_chejan_data = {}
-        self.not_signed_account_dict = {}
+        self.dict_not_signed_account = {}
 
     # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
     def set_kiwoom_api(self):
@@ -54,11 +54,11 @@ class KiwoomAPI(QAxWidget):
     # 로그인 성공했는지/실패했는지 여부 
     def E_OnEventConnect(self, err_code):
         if err_code == 0:
-            str__login_success = "로그인에 성공했습니다."
-            print(str__login_success)
+            istr__login_success = "로그인에 성공했습니다."
+            print(istr__login_success)
         else:
-            str__login_failure = "로그인에 실패했습니다."
-            print(str__login_failure)
+            istr__login_failure = "로그인에 실패했습니다."
+            print(istr__login_failure)
 
         self.login_event_loop.exit()
     
@@ -78,7 +78,10 @@ class KiwoomAPI(QAxWidget):
     def E_OnReceiveChejanData(self, sGubun, nItemCnt, sFidList):
         # sGubun = 0: 주문체결통보, 1:잔고통보, 3:특이신호
         if sGubun == 0: #주문번호, 주문수량, 주문가격,
-            self.mlist_chejan_data["체결내용"] = [self.GetChejanData(9203), self.GetChejanData(900), self.GetChejanData(901)]
+            self.mlist_chejan_data["체결내용"].update({'종목코드': self.GetChejanData(9203)})
+            self.mlist_chejan_data["체결내용"].update({'주문수량': self.GetChejanData(900)})
+            self.mlist_chejan_data["체결내용"].update({'주문가격': self.GetChejanData(901)})
+            
         elif sGubun == 1:
             self.mlist_chejan_data["잔고통보"] = [self.GetChejanData(9001), self.GetChejanData(930), self.GetChejanData(10)]
 
@@ -114,28 +117,26 @@ class KiwoomAPI(QAxWidget):
 
     # 조회 요청
     def CommRqData(self, sRQName, sTrCode, nPrevNext, sScreenNo):
-        ret = self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
+        self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
         self.event_loop_CommRqData.exec_()
 
     # 조회 요청 시 TR의 Input 값을 지정
     def SetInputValue(self, sID, sValue):
-        str_Input_value = self.dynamicCall('SetInputValue(String, String)', sID, sValue)
-
-        # print(str_Input_value)
+        self.dynamicCall('SetInputValue(String, String)', sID, sValue)
 
     # 조회 수신한 멀티 데이터의 개수 (Max : 900개)
     def GetRepeatCnt(self, sTrCode, sRecordName):
-        cnt = self.dynamicCall('GetRepeatCnt(String, String)', sTrCode, sRecordName)
+        in_cnt = self.dynamicCall('GetRepeatCnt(String, String)', sTrCode, sRecordName)
 
         # print(ret)
-        return cnt
+        return in_cnt
 
     # 조회 데이터 요청
     def GetCommData(self, strTrCode, strRecordName, nIndex, strItemName):
-        any_rq_data = self.dynamicCall('GetCommData(String, String, int, String)', strTrCode, strRecordName, nIndex, strItemName)
+        idict_any_rq_data = self.dynamicCall('GetCommData(String, String, int, String)', strTrCode, strRecordName, nIndex, strItemName)
 
         # print(ret)
-        return any_rq_data.strip()
+        return idict_any_rq_data.strip()
 
     # TR 요청
     def Call_TR(self, strTrCode, sRQName):
@@ -144,116 +145,111 @@ class KiwoomAPI(QAxWidget):
                 "GetRepeatCnt(QString, QString)", strTrCode, sRQName)
 
             for i in range(cnt):
-                stock_code = self.dynamicCall(
+                istr_stock_code = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "종목코드")
-                stock_code = stock_code.strip()
+                istr_stock_code = istr_stock_code.strip()
 
-                stock_order_number = self.dynamicCall(
+                in_stock_order_number = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문번호")
-                stock_order_number = int(stock_order_number)
+                in_stock_order_number = int(in_stock_order_number)
 
-                stock_name = self.dynamicCall(
+                istr_stock_name = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "종목명")
-                stock_name = stock_name.strip()
+                istr_stock_name = istr_stock_name.strip()
 
-                stock_order_type = self.dynamicCall(
+                istr_stock_order_type = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문구분")
-                stock_order_type = stock_order_type.strip().lstrip('+').lstrip('-')
+                istr_stock_order_type = istr_stock_order_type.strip().lstrip('+').lstrip('-')
 
-                stock_order_price = self.dynamicCall(
+                in_stock_order_price = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문가격")
-                stock_order_price = int(stock_order_price)
+                in_stock_order_price = int(in_stock_order_price)
 
-                stock_order_quantity = self.dynamicCall(
+                in_stock_order_quantity = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문수량")
-                stock_order_quantity = int(stock_order_quantity)
+                in_stock_order_quantity = int(in_stock_order_quantity)
 
-                stock_not_signed_quantity = self.dynamicCall(
+                in_stock_not_signed_quantity = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "미체결수량")
-                stock_not_signed_quantity = int(stock_not_signed_quantity)
+                in_stock_not_signed_quantity = int(in_stock_not_signed_quantity)
 
-                stock_signed_quantity = self.dynamicCall(
+                in_stock_signed_quantity = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "체결량")
-                stock_signed_quantity = int(stock_signed_quantity)
+                in_stock_signed_quantity = int(in_stock_signed_quantity)
 
-                stock_present_price = self.dynamicCall(
+                istr_stock_present_price = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "현재가")
-                stock_present_price = int(
-                    stock_present_price.strip().lstrip('+').lstrip('-'))
+                istr_stock_present_price = int(
+                    istr_stock_present_price.strip().lstrip('+').lstrip('-'))
 
-                stock_order_status = self.dynamicCall(
+                istr_stock_order_status = self.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문상태")
-                stock_order_status = stock_order_status.strip()
+                istr_stock_order_status = istr_stock_order_status.strip()
 
-                if not stock_order_number in self.not_signed_account_dict:
-                    self.not_signed_account_dict[stock_order_number] = {}
+                if not in_stock_order_number in self.dict_not_signed_account:
+                    self.dict_not_signed_account[in_stock_order_number] = {}
 
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'종목코드': stock_code})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'종목명': stock_name})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'주문구분': stock_order_type})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'주문가격': stock_order_price})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'주문수량': stock_order_quantity})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'미체결수량': stock_not_signed_quantity})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'체결량': stock_signed_quantity})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'현재가': stock_present_price})
-                self.not_signed_account_dict[stock_order_number].update(
-                    {'주문상태': stock_order_status})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'종목코드': istr_stock_code})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'종목명': istr_stock_name})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'주문구분': istr_stock_order_type})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'주문가격': in_stock_order_price})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'주문수량': in_stock_order_quantity})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'미체결수량': in_stock_not_signed_quantity})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'체결량': in_stock_signed_quantity})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'현재가': istr_stock_present_price})
+                self.dict_not_signed_account[in_stock_order_number].update(
+                    {'주문상태': istr_stock_order_status})
 
         else: 
-            self.rq_data[strTrCode] = {}
-            self.rq_data[strTrCode]['Data'] = {}
+            self.mdict_rq_data[strTrCode] = {}
+            self.mdict_rq_data[strTrCode]['Data'] = {}
             
-            self.rq_data[strTrCode]['TrCode'] = strTrCode
+            self.mdict_rq_data[strTrCode]['TrCode'] = strTrCode
 
             count = self.GetRepeatCnt(strTrCode, sRQName)
-            self.rq_data[strTrCode]['Count'] = count
+            self.mdict_rq_data[strTrCode]['Count'] = count
 
             if count == 0:
                 lst_temp_data_rq = []
                 dict_temp_data_rq = {}
-                for output in self.output_list:
-                    any_rq_data = self.GetCommData(strTrCode, sRQName, 0, output)
-                    dict_temp_data_rq[output] = any_rq_data
+                for output in self.mlist_output:
+                    any_mdict_rq_data = self.GetCommData(strTrCode, sRQName, 0, output)
+                    dict_temp_data_rq[output] = any_mdict_rq_data
 
                 lst_temp_data_rq.append(dict_temp_data_rq)
                 
-                self.rq_data[strTrCode]['Data'] = lst_temp_data_rq
+                self.mdict_rq_data[strTrCode]['Data'] = lst_temp_data_rq
 
             if count >= 1:
                 lst_temp_data_rq = []
                 for i in range(count):
                     dict_temp_data_rq = {}
-                    for output in self.output_list:
-                        any_rq_data = self.GetCommData(strTrCode, sRQName, i, output)
-                        dict_temp_data_rq[output] = any_rq_data
+                    for output in self.mlist_output:
+                        any_mdict_rq_data = self.GetCommData(strTrCode, sRQName, i, output)
+                        dict_temp_data_rq[output] = any_mdict_rq_data
 
                     lst_temp_data_rq.append(dict_temp_data_rq)
                 
-                self.rq_data[strTrCode]['Data'] = lst_temp_data_rq
+                self.mdict_rq_data[strTrCode]['Data'] = lst_temp_data_rq
     
     # 체결잔고 데이터 반환
     def GetChejanData(self, nFid):
-        ret = self.dynamicCall('GetChejanData(int)', nFid)
+        any_ret = self.dynamicCall('GetChejanData(int)', nFid)
 
-        return ret
+        return any_ret
     
     # 주식 주문을 서버로 전송, 에러코드 반환
     def SendOrder(self, sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo):
-        ret = self.dynamicCall('SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)', [sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo])
+        self.dynamicCall('SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)', [sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo])
         self.event_loop_SendOrder.exec_()
 
-        # if ret != 0:
-        #     print("매수실패")
-        # else:
-        #     print("매수성공")
 
-        return ret
         
