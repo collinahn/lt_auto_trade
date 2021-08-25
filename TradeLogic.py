@@ -29,6 +29,7 @@ class TradeLogic:
             cls._init = True
 
             self.cls_SM = SharedMem()
+            self.queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
 
             self.log.INFO("TradeLogic init")
 
@@ -39,7 +40,7 @@ class TradeLogic:
     # 요청 형식을 푸시한다
     def push_queue(self, dictRequestFormat: dict):
         #파이썬스럽지 않은 코드인데 누가 파이썬스럽게 고쳐줄사람 2021.08.12 by aty
-        while self.cls_SM.iq_RequestQueue.pushQueue(dictRequestFormat) == False:
+        while self.queue4Request.pushQueue(dictRequestFormat) == False:
             #큐가 꽉 차서 와일 내부 문장이 실행된다면, 처리될 때까지 잠시 기다린다.
             time.sleep(0.1)
             

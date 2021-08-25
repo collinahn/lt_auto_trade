@@ -43,6 +43,8 @@ class SharedMem(object):
             self.cls_DB = GetPutDB(self)
 
             self.log.INFO("SharedMem init:", self.__il_AccountInfo)
+        else:
+            self.log.WARNING("SharedMem Init Not Complete !!")
 
     @staticmethod
     def getInstance():

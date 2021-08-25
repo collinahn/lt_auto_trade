@@ -45,7 +45,7 @@ class Stock(object):
         # if {args[0]}.issubset(Stock.__mset_Stocks) == False:
         if args[0] not in Stock.__mset_Stocks:
             self.__in_Ticker = args[0]
-            self.__is_LogicOption = ""
+            self.__is_LogicOption = "" #args[1]
             self.__is_TradeOption = ""
             #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
             self.__is_StockName = ""
