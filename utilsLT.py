@@ -2,6 +2,7 @@
 
 # 2021.08.12 created by taeyoung (Stocks.py에 있던 큐 자료구조 이관)
 # 2021.08.20 modified by taeyoung 큐 이름을 같은 것으로 생성하면 동일한 인스턴스가 반환되도록 생성자 수정
+# 2021.08.25 modified by taeyoung 큐에 푸시하고 테일포인트를 옮길 때 thread-safe하도록 수정
 
 # 데이터 집어넣을 땐: push
 # 데이터 가져올 땐: getHead & pull
@@ -9,6 +10,7 @@
 # 이름이 같으면 크기를 다르게 설정하여 생성하여도 기존 생성된 인스턴스가 반환된다.
 
 from LoggerLT import Logger
+import threading
 
 class QueueLT:
     __mset_Instance = set()
@@ -35,6 +37,8 @@ class QueueLT:
 
             QueueLT.__mset_Instance.add(sName)
 
+            self.lock = threading.Lock() # 서로 다른 스레드에서 푸시할 때 데이터의 경쟁상태 방지
+
             self.log.INFO(sName, "Queue init, size:", nSize)
 
         else: 
@@ -47,15 +51,20 @@ class QueueLT:
         if n_NextTailPointIdx is self.__in_HeadPointIdx:            # 테일+1 == 헤드(버퍼 full)
             self.log.WARNING(self.__is_Name, "Queue Full") 
             return False
+
+        self.lock.acquire()
         self.__iq_Queue[self.__in_TailPointIdx] = value   # 테일포인터가 가르키는 자리에 value삽입
         self.__in_TailPointIdx = n_NextTailPointIdx             # 다음 자리로 테일포인터 이동.
+        self.lock.release()
+
         return True
         
     #큐에서 데이터를 빼고(함수 앞에서 getHead로) 헤드포인트를 옮긴다.
+    #받는 곳은 한 곳이라 스레드 락을 걸어줄 필욘 없음
     def pullQueue(self) -> bool:
         n_NextHeadPointIdx = (self.__in_HeadPointIdx+1) % self.__in_QueueSize
 
-        if self.__in_HeadPointIdx is self.__in_TailPointIdx:        # 테일 == 헤드 (buffer empty)
+        if self.__in_HeadPointIdx == self.__in_TailPointIdx:        # 테일 == 헤드 (buffer empty)
             return False
         self.__in_HeadPointIdx = n_NextHeadPointIdx
         return True
