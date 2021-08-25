@@ -14,7 +14,12 @@ print(const.EXAMPLE_CONST)
 
 #-----------Logger--------
 
-LOG_PATH = './log/log.txt'
+LOG_FOLDER_PATH = '../loglt/'
+LOG_FILE_PATH = LOG_FOLDER_PATH+'lt.log'
+
+MAX_BYTES = 10*1024*1024
+BACKUP_CNT = 10
+
 
 STACK_LV = 2
 STACK_LV_OBJ = STACK_LV + 1
@@ -64,7 +69,7 @@ LOGIC_OPTION = { "LarryWilliams", "MFI", "ClosingPrice" "CandleTrade" }
 
 TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
 
-MFI_STANDARD = 14
+MFI_STANDARD = 14 # 14일
 
 API_CALL_LIMIT_PER_SEC = 4
 

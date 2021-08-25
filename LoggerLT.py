@@ -32,6 +32,7 @@ log.DEBUG("msg")
 import logging
 import logging.handlers
 import constantsLT as const
+import os
 
 class Logger:
 
@@ -39,14 +40,13 @@ class Logger:
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
 
-        #     cls.__debuglog = logging.getLogger("debug")
-        #     cls.__debuglog.setLevel(logging.DEBUG)
-        #     cls.debugformatter = logging.Formatter('%(asctime)s [%(filename)s:%(funcName)s:%(lineno)s] [%(levelname)s] >> %(message)s')
-        #     cls.debugstreamHandler = logging.StreamHandler()
-        #     cls.debugstreamHandler.setFormatter(cls.debugformatter)
-        #     cls.__debuglog.addHandler(cls.debugstreamHandler)
-
-        # cls.__debuglog.info(str(cls._instance), stacklevel=const.STACK_LV_OBJ)
+            #폴더가 없는 경우
+            if os.path.exists(const.LOG_FOLDER_PATH) == False:
+                os.mkdir(const.LOG_FOLDER_PATH)
+            #파일이 없는 경우
+            if os.path.exists(const.LOG_FILE_PATH) == False:
+                f = open(const.LOG_FILE_PATH, 'w', encoding='UTF-8')
+                f.close()
 
         return cls._instance
 
@@ -60,7 +60,8 @@ class Logger:
             cls.__logger.setLevel(logging.DEBUG)
 
             cls.formatter = logging.Formatter('%(asctime)s [%(filename)s:%(funcName)s:%(lineno)s] [%(levelname)s] >> %(message)s')
-            cls.fileHandler = logging.FileHandler(const.LOG_PATH)
+            # cls.fileHandler = logging.FileHandler(const.LOG_FILE_PATH)
+            cls.fileHandler = logging.handlers.RotatingFileHandler(const.LOG_FILE_PATH, maxBytes=const.MAX_BYTES, backupCount=const.BACKUP_CNT)
             cls.streamHandler = logging.StreamHandler()
             cls.fileHandler.setFormatter(cls.formatter)
             cls.streamHandler.setFormatter(cls.formatter)
