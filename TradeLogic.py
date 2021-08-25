@@ -192,46 +192,45 @@ class TradeLogic:
 # MFR = 14 일간 양의 RMF/14일간 음의 RMF​
 # MFI = 100 − (100 / 1+ MFR​)
 
-# 14일간의 당일 고가, 저가, 종가, 거래량을 받아와야 하는데, 그걸 한번에 리스트로 받으면 정말 좋을 듯
-# 아니면 아예 rmf, mfr를 구하는 식이 stocks.py에 저장되면 더 좋을 수도.. 굳이 여기서 연산하는거보다
-# 거기서 연산된 값을 가져오는게 더 좋을거같다..
-
-    def Money_Flow_Index(self, nStockID):
+    def Money_Flow_Index_Buy(self, nStockID):
         cls_TargetStock = self.cls_SM.get_instance(nStockID)
         cls_AccountInfo = self.cls_SM.get_usr_info()
-        n_TodayDate = time.strftime("%x", time.localtime(time.time()))
+        n_PriceNow = cls_TargetStock.price
         n_mfi = cls_TargetStock.mfi
-        now = datetime.now()
-        n_investmoney = 0 # 초기 자본 (초기 투자 금액) <- 이 정보가 저장이 되어있나? 안되어있는거같긴한데.. 다른방법을 고안해봐야할듯..
-
-        if cls_AccountInfo['current_cash'] >= n_investmoney*0.2: # 최소 초기 자본 20% 이상이 있어야 거래 진행, cls_AccountInfo['current_cash'] = 계좌정보에서의 예수금 (현재 보유 현금)
+        n_stock_quantity = int((((cls_AccountInfo.remain_money)/3)/n_PriceNow)/10)
+        # 남은 돈의 1/3을 사고자 하는 주식가격으로 나눈 후 그것의 1/10을 한다. ex) 1억이 남은 돈이라면 
+        # 3천만원을 내 쓰는 돈이라 생각하고, 카카오 주식을 산다 했을때 한 주당 15만원이니까
+        # 200개를 총 살 수 있지만 그 중 1/10 해서 20개만 산다
+    
             #------------------사는 로직 ------------------------------
-            if 0 <= n_mfi <= 30: #과매도 상태
-                if 9 <= now.hour <= 15 and now.minute == 0 and now.second%60 == 0: # 매 시각 정각에만 매수 (계속 과매수상태여도 한시간에 한번만 매수한다) <- 의도는 그렇긴한데.. 쉽지않네
-                    dict_BuyRequest = { 
-                        "StockID":nStockID,
-                        "TradeOption":cls_TargetStock.trade_option,
-                        "Buy":10, #보유금액 10%정도? 못정했다.
-                        "Sell":0
-                    }
-                    self.push_queue(dict_BuyRequest)
-                    self.log.INFO("Buy Request Pushed", dict_BuyRequest)
+        if n_mfi < 0: # mfi < 0 일 경우
+            self.log.INFO("error occured", n_mfi)
 
+        if 0 <= n_mfi <= 30 and n_stock_quantity > 0: #과매도 상태
+            dict_BuyRequest = { 
+                "StockID":nStockID,
+                "TradeOption":cls_TargetStock.trade_option,
+                "Buy": n_stock_quantity, # 비례로 사기
+                "Sell":0
+            }
+            self.push_queue(dict_BuyRequest)
+            self.log.INFO("Buy Request Pushed", dict_BuyRequest)
+
+    def Money_Flow_Index_Sell(self, nStockID):
+        cls_TargetStock = self.cls_SM.get_instance(nStockID)
+        cls_AccountInfo = self.cls_SM.get_usr_info()
+        n_mfi = cls_TargetStock.mfi
             #------------------파는 로직 ------------------------------
-            if n_mfi >= 70 and cls_TargetStock.quantity > 0: #과매수 상태
-                dict_SellRequest = { 
+        if n_mfi >= 70 and cls_TargetStock.quantity > 0: #과매수 상태
+            dict_SellRequest = { 
                 "StockID":nStockID,
                 "TradeOption":cls_TargetStock.trade_option,
                 "Buy":0,
                 "Sell":cls_TargetStock.quantity
-                }
-                self.push_queue(dict_SellRequest)
-                self.log.INFO("Sell Request Pushed", dict_SellRequest)
+            }
+            self.push_queue(dict_SellRequest)
+            self.log.INFO("Sell Request Pushed", dict_SellRequest)
 
-            else: # mfi < 0 일 경우
-                self.log.INFO("error occured", n_mfi)
-        else:
-            self.log.INFO("최소 현금 보유금액을 유지하기 위해 거래 중지")
             
 #--------- 아래는 무시 바람------------------#
 
@@ -265,9 +264,10 @@ class TradeLogic:
                 elif value.logic_option == 'MFI':
                     t_Now = datetime.now().timestamp()
                     if t_Now - t_LastExecMFI > 3600:
-                        self.Money_Flow_Index(key)
+                        self.Money_Flow_Index_Buy(key)
 
-                        t_LastExecMFI = datetime.now().timestamp()
+                    t_LastExecMFI = datetime.now().timestamp()
+                    self.Money_Flow_Index_Sell(key)
 
                 elif value.logic_option == 'ClosingPrice':
                     self.Closing_Price(key)
