@@ -17,7 +17,6 @@ from LoggerLT import Logger
 from utilsLT import QueueLT
 import constantsLT as const
 from GetPutDB import GetPutDB
-# from KiwoomMain import KiwoomMain
 
 
 class SharedMem(object):
@@ -36,26 +35,30 @@ class SharedMem(object):
         if not hasattr(cls, "_init") and not hasattr(cls, "__il_Account_Info") and args:
             cls._init = True
             # if문 내부에서 초기화 진행
-            self.__il_AccountInfo =args  # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
+            self.__it_AccountInfo = args[0]  # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
 
             self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
             self.cls_DB = GetPutDB(self)
 
-            self.log.INFO("SharedMem init:", self.__il_AccountInfo)
-        else:
+            self.log.INFO("SharedMem init:", self.__it_AccountInfo)
+
+        if not hasattr(cls, "_init"):
             self.log.WARNING("SharedMem Init Not Complete !!")
 
-    @staticmethod
-    def getInstance():
-        return SharedMem()
 
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
 
     #유저 정보(계좌 정보)를 넘겨준다
-    def get_usr_info(self):
-        return self.__il_AccountInfo
+    #(로그인여부, 이름, 아이디, 계좌 개수, 계좌번호)
+    #('Log in', '안태영', 'aty721', '1', '8006878611')
+    def get_usr_info(self) -> tuple:
+        try:
+            return self.__it_AccountInfo
+        except NameError:
+            self.log.CRITICAL("SharedMem init not proceeded")
+            return None
 
     #key 값 = 종목코드
     def add(self, nKey: int) -> None:
@@ -212,7 +215,7 @@ class SharedMem(object):
             self.log.INFO("Info Request Pushed", self.__mdict_MstObject.keys())
 
     #다른 스레드에서 이거 하나만 호출해도 된다.
-    def update(self, queue4Request):
+    def update_request(self, queue4Request):
         self.push_update_request(queue4Request)
         # self.update_current_stock_price()
         # self.update_average_price_bought()

@@ -10,7 +10,6 @@
 # m: 클래스 멤버 변수
 # i : 인스턴스 변수
 
-from typing import List, Tuple
 import constantsLT as const
 from LoggerLT import Logger
 from utilsLT import QueueLT
@@ -288,15 +287,17 @@ class Stock(object):
     def day_bought(self, dayBought: int):
         self.__id_DayBought = dayBought
 
-    #[전일시가, 전일종가] 로 매일 초기화 반드시 해야함
+    #[전일시가, 전일종가] 로 매일 초기화 반드시 해야함, 자동으로 큐에 들어감
     @price_data_before.setter
     def price_data_before(self, dict_Price: dict):
         self.__id_PriceDataBefore = dict_Price
+        self.__iq_PriceDataQueue.pushQueue(dict_Price)
+        self.__iq_PriceDataQueue.pullQueue()  
 
-    @price_data_queue.setter
-    def price_data_queue(self, dict_Price: dict):
-        self.__iq_PriceDataList.pushQueue(dict_Price)
-        self.__iq_PriceDataList.pullQueue()        #데이터를 pull하는 곳이 없음
+    # @price_data_queue.setter
+    # def price_data_queue(self, dict_Price: dict):
+    #     self.__iq_PriceDataList.pushQueue(dict_Price)
+    #     self.__iq_PriceDataList.pullQueue()        #데이터를 pull하는 곳이 없음
 
 
 

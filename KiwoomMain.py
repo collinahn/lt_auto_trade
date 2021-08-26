@@ -47,10 +47,11 @@ class KiwoomMain:
     ##사용가능한 함수들
     # 내 로그인 정보 불러오기 (로그인 상태, 이름, ID, 계좌 개수, 계좌번호) 8.8일 작성
     def Get_Login_Info(self):
-        istr_login_state = self.kiwoom.print_login_connect_state #
+        istr_login_state = self.kiwoom.print_login_connect_state() #
         istr__user_name, istr__user_id, istr__account_count, istr__account_list = self.kiwoom.login_info()
-        list_login_data =  istr_login_state, istr__user_name, istr__user_id, istr__account_count, istr__account_list.rstrip(';')
-        return list_login_data
+        
+        return  istr_login_state, istr__user_name, istr__user_id, istr__account_count, istr__account_list.rstrip(';')
+        
 
     # OPT10085: 계좌수익률요청 
     def Get_Account_Info(self, istr_account_number):

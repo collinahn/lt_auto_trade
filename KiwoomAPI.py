@@ -8,6 +8,7 @@
 # 2021-08-09 체결정보, 잔고처리, 주문 관련 API (미완)
 # 2021-08-12 import 수정 완료, 매수/매도 함수 관련 api update (event_loop자리 이동, E_OnReceiveChejandata 함수 수정, Call_TR함수 살짝 수정) (미완)
 # 2021-08-19 미체결정보 관련 함수 구현 완료
+# 2021.08.26 updated by taeyoung: shared memory 업데이트 관련 기능 구현
 
 ## written by: ChanHyuk Jeon
 
@@ -15,13 +16,19 @@ import sys
 import os
 from PyQt5.QAxContainer import QAxWidget
 from PyQt5.QtCore import QEventLoop
+from SharedMem import SharedMem
+from LoggerLT import Logger
+from datetime import datetime
 
 class KiwoomAPI(QAxWidget):
     def __init__(self):
         super().__init__()
+        self.log = Logger()
         self.login_event_loop = QEventLoop() #로그인 관련 이벤트 루프
         self.event_loop_CommRqData = QEventLoop()
         self.event_loop_SendOrder = QEventLoop()
+
+        self.cls_SM = SharedMem()
         
         # 초기 작업 
         self.set_kiwoom_api() 
@@ -30,6 +37,8 @@ class KiwoomAPI(QAxWidget):
         self.mlist_output = []
         self.mlist_chejan_data = {}
         self.dict_not_signed_account = {}
+
+        self.log.INFO("KiwoomAPI init")
 
     # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
     def set_kiwoom_api(self):
@@ -43,22 +52,20 @@ class KiwoomAPI(QAxWidget):
         
         # 조회와 실시간 데이터 처리
         self.OnReceiveTrData.connect(self.E_OnReceiveTrData) 
-        self.OnReceiveRealData.connect(self.E_OnReceiveRealData)
+        # self.OnReceiveRealData.connect(self.E_OnReceiveRealData)
 
         # 체결정보 / 잔고정보 처리
         self.OnReceiveChejanData.connect(self.E_OnReceiveChejanData)
 
     def E_OnReceiveMsg(self, sScrNo, sRQName, sTrCode, sMsg):
-        print(sScrNo, sRQName, sTrCode, sMsg)
+        self.log.INFO(sScrNo, sRQName, sTrCode, sMsg)
 
     # 로그인 성공했는지/실패했는지 여부 
     def E_OnEventConnect(self, err_code):
         if err_code == 0:
-            istr__login_success = "로그인에 성공했습니다."
-            print(istr__login_success)
+            self.log.INFO("Login Success")
         else:
-            istr__login_failure = "로그인에 실패했습니다."
-            print(istr__login_failure)
+            self.log.INFO("Login Failure", err_code)
 
         self.login_event_loop.exit()
     
@@ -67,8 +74,10 @@ class KiwoomAPI(QAxWidget):
         # print(sScrNo, sRQName, sTrCode, sRecordName, sPrevNext, nDataLength, sErrorCode, sMessage, sSplmMsg)    
 
         self.Call_TR(sTrCode, sRQName)
+        self.update_shared_mem(sTrCode)
 
         self.event_loop_CommRqData.exit()    
+
 
     def E_OnReceiveRealData(self, sCode, sRealType, sRealData):
         # print(sCode, sRealType, sRealData)
@@ -88,7 +97,37 @@ class KiwoomAPI(QAxWidget):
         self.event_loop_SendOrder.exit()
         # print(sGubun, nItemCnt, sFidList)
 
-#-----------------# 
+#-----------------#
+# sharedmem 업데이트 함수 
+    def update_shared_mem(self, sStockID: str) -> bool:
+        try:
+            n_StockID = int(sStockID)
+        except Exception as e:
+            self.log.ERROR("Cannot Update SharedMem", e)
+            return
+
+        obj_StockInstance = self.cls_SM.get_instance(n_StockID)
+        if obj_StockInstance == None:
+            self.log.CRITICAL(n_StockID, "Stock Does Not Exists")
+            return False
+
+        #-----------여기서 업데이트------------
+        obj_StockInstance.name              = ''       # 종목이름
+        obj_StockInstance.price             = 0        # 현재가
+        obj_StockInstance.stock_volume_q    = 0        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
+        
+        obj_StockInstance.price_data_before = {
+                "start":0,                              # 시가, 하루에 한번
+                "end":0,                                # 종가, 하루에 한번
+                "highest":0,                            # 고가, 하루에 한번
+                "lowest":0                              # 저가, 하루에 한번
+        }
+        obj_StockInstance.updated_time      = str(datetime.now())
+        #===========업데이트 끝=============
+
+
+
+
     ## OpenAPI 함수 ##
     # 키움증권 로그인 
     def login(self):
@@ -98,14 +137,8 @@ class KiwoomAPI(QAxWidget):
     # 현재 계정 상태 표시    
     def print_login_connect_state(self):
         isLogin = self.dynamicCall("GetConnectState()")
-        if isLogin == 1:
-            istr__login_state_on = "현재 계정은 로그인 상태입니다."
-            # print("\n현재 계정은 로그인 상태입니다.")
-            return istr__login_state_on
-        else:
-            istr__login_state_off = "현재 계정은 로그아웃 상태입니다."
-            # print("\n현재 계정은 로그아웃 상태입니다.")
-            return istr__login_state_off
+
+        return 'Log in' if isLogin == 1 else 'Log out'
 
     # 내 정보 조회 기능 (이름, ID, 계좌개수, 계좌)
     def login_info(self):
@@ -126,10 +159,7 @@ class KiwoomAPI(QAxWidget):
 
     # 조회 수신한 멀티 데이터의 개수 (Max : 900개)
     def GetRepeatCnt(self, sTrCode, sRecordName):
-        in_cnt = self.dynamicCall('GetRepeatCnt(String, String)', sTrCode, sRecordName)
-
-        # print(ret)
-        return in_cnt
+        return self.dynamicCall('GetRepeatCnt(String, String)', sTrCode, sRecordName)
 
     # 조회 데이터 요청
     def GetCommData(self, strTrCode, strRecordName, nIndex, strItemName):
@@ -242,9 +272,7 @@ class KiwoomAPI(QAxWidget):
     
     # 체결잔고 데이터 반환
     def GetChejanData(self, nFid):
-        any_ret = self.dynamicCall('GetChejanData(int)', nFid)
-
-        return any_ret
+        return self.dynamicCall('GetChejanData(int)', nFid)
     
     # 주식 주문을 서버로 전송, 에러코드 반환
     def SendOrder(self, sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo):

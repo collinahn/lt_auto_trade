@@ -232,6 +232,7 @@ class GetPutDB(object):
 
 
 if __name__ == "__main__":
+    from SharedMem import SharedMem
     sm = SharedMem([123, 123, 123])
     db = GetPutDB()
     sm.add(111)

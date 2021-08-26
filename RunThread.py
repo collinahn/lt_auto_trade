@@ -23,8 +23,8 @@ import time
 from threading import Thread, Timer
 import constantsLT as const
 from datetime import datetime
-# from PyQt5.QtWidgets import QApplication
-# from KiwoomMain import KiwoomMain
+from PyQt5.QtWidgets import QApplication
+from KiwoomMain import KiwoomMain
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
 from TradeLogic import TradeLogic
@@ -48,13 +48,13 @@ class RunThread(object):
             # if문 내부에서 초기화 진행
 
             #키움 초기화 및 로그인 처리
-            # self.qapp = QApplication(sys.argv)
-            # self.cls_KM = KiwoomMain()
+            self.qapp = QApplication(sys.argv)
+            self.cls_KM = KiwoomMain()
             
             #유저 정보를 받아와서 공유메모리 초기화
-            # lst_usr_info = self.cls_KM.Get_Login_Info()
-            self.cls_SM = SharedMem()#lst_usr_info)
-            self.cls_SR = SendRequest2Api()#lst_usr_info)
+            lst_usr_info = self.cls_KM.Get_Login_Info()
+            self.cls_SM = SharedMem(lst_usr_info)
+            self.cls_SR = SendRequest2Api(lst_usr_info)
 
             self.cls_DB = GetPutDB(self.cls_SM)
             self.cls_TL = TradeLogic()
@@ -75,7 +75,7 @@ class RunThread(object):
             time.sleep(const.LONG_SLEEP_TIME)
 
 
-    #sharedMem 업데이트하고 바로 DB 업데이트하는 함수 호출, 60초에 한번
+    #DB 업데이트 후 sharedMem 업데이트 요청 보내는 함수 호출, 60초에 한번
     def update_info(self):
         queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
         t_LastUpdated = datetime.now().timestamp()
@@ -85,8 +85,8 @@ class RunThread(object):
         while True:
             t_Now = datetime.now().timestamp()
             if t_Now - t_LastUpdated > const.SM_UPDATE_PERIOD:
-                self.cls_SM.update(queue4Request)
                 self.cls_DB.update_properties()
+                self.cls_SM.update_request(queue4Request)
 
                 t_LastUpdated = datetime.now().timestamp()
             
@@ -133,4 +133,4 @@ class RunThread(object):
 
 if __name__ == "__main__":
     rt = RunThread()
-    rt.run_thread()
+    # rt.run_thread()
