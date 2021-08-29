@@ -14,10 +14,10 @@
 # 2021.08.02 created by 태영
 
 
-from SendRequest2Api import SendRequest2Api
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL) # ctrl + c로 종료할 수 있도록
 
+from SendRequest2Api import SendRequest2Api
 import sys
 import time
 from threading import Thread, Timer
