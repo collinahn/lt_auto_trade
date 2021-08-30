@@ -17,7 +17,6 @@
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL) # ctrl + c로 종료할 수 있도록
 
-from SendRequest2Api import SendRequest2Api
 import sys
 import time
 from threading import Thread, Timer
@@ -25,6 +24,7 @@ import constantsLT as const
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from KiwoomMain import KiwoomMain
+from SendRequest2Api import SendRequest2Api
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
 from TradeLogic import TradeLogic
@@ -101,7 +101,7 @@ class RunThread(object):
     
     #의사결정 스레드의 요청대로 api호출하여 주문한다.
     #1초에 최대 4번까지 처리가 가능하다.
-    def trade_stocks(self):
+    def call_api(self):
         
         self.log.INFO("thread start")
         
@@ -115,22 +115,27 @@ class RunThread(object):
 
         #-----------스레드 등록-----------
         lst_Threads.append(Thread(target=self.update_info))
-        lst_Threads.append(Thread(target=self.call_price))
-        lst_Threads.append(Thread(target=self.trade_stocks))
+        # lst_Threads.append(Thread(target=self.call_price))
+        lst_Threads.append(Thread(target=self.call_api))
         #-----------스레드 등록-----------
         
         for work in lst_Threads:
             work.setDaemon(False)
             work.start()
 
-        self.initialize_info_timer()
+        # self.initialize_info_timer()
         
-        #무한루프 스레드를 돌리기 때문에 이 이후로는 실행되지 않는다.
-        for work in lst_Threads:
-            work.join()
-            self.log.CRITICAL("Thread Joined !", work)
+        # #무한루프 스레드를 돌리기 때문에 이 이후로는 실행되지 않는다.
+        # for work in lst_Threads:
+        #     work.join()
+        #     self.log.CRITICAL("Thread Joined !", work)
 
 
 if __name__ == "__main__":
+
     rt = RunThread()
-    # rt.run_thread()
+    rt.run_thread()
+
+    db = GetPutDB()
+    sm = SharedMem(db)
+    sm.add(5930)

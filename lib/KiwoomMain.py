@@ -47,39 +47,34 @@ class KiwoomMain:
     ##사용가능한 함수들
     # 내 로그인 정보 불러오기 (로그인 상태, 이름, ID, 계좌 개수, 계좌번호) 8.8일 작성
     def Get_Login_Info(self):
-        istr_login_state = self.kiwoom.print_login_connect_state() #
-        istr__user_name, istr__user_id, istr__account_count, istr__account_list = self.kiwoom.login_info()
+        s_login_state = self.kiwoom.print_login_connect_state() #
+        __s_user_name, __s_user_id, __s_account_count, __s_account_list = self.kiwoom.login_info()
         
-        return  istr_login_state, istr__user_name, istr__user_id, istr__account_count, istr__account_list.rstrip(';')
+        return  s_login_state, __s_user_name, __s_user_id, __s_account_count, __s_account_list.rstrip(';')
         
 
     # OPT10085: 계좌수익률요청 
-    def Get_Account_Info(self, istr_account_number):
-        self.kiwoom.mlist_output = output_list['OPT10085']
-        self.kiwoom.SetInputValue("계좌번호", istr_account_number)
-        self.kiwoom.CommRqData("OPT10085", "OPT10085", 0, "0101")
-
+    def Get_Account_Info(self, sAccountNo):
+        self._Request_Info('OPT10085', "계좌번호", sAccountNo)
         self.log.INFO("수익률 관련 정보 = ", self.kiwoom.mdict_rq_data['OPT10085']['Data'])
 
         return self.kiwoom.mdict_rq_data['OPT10085']['Data']
 
     # OPT10001: 주식기본정보요청 관련 정보 TR_Code.py에 있음 (종목명, 액면가, 자본금, 시가총액, 영업이익, PER, ROE ) 8/8일 작성
-    def Get_Basic_Stock_Info(self, istr_stock_code):
-        self.kiwoom.mlist_output = output_list['OPT10001']
-        self.kiwoom.SetInputValue("종목코드", istr_stock_code)
-        self.kiwoom.CommRqData("OPT10001", "OPT10001", 0, "0101")
-
-        return self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]
+    def Get_Basic_Stock_Info(self, sStockID) -> int:
+        return self._Request_Info('OPT10001', "종목코드", sStockID)
 
     # OPT10003: 체결정보요청 관련 정보 TR_Code.py에 있음 (현재가, 체결강도) 8.8일 작성// 8.9일 수정 완료
-    def Chegyul_Info(self, istr_stock_code):
-        self.kiwoom.mlist_output = output_list['OPT10003']
-        self.kiwoom.SetInputValue("종목코드", istr_stock_code)
-        self.kiwoom.CommRqData("OPT10003", "OPT10003", 0, "0101")
-    
-        return self.kiwoom.mdict_rq_data['OPT10003']['Data'][0]
+    def Chegyul_Info(self, sStockID) -> int:
+        return self._Request_Info('OPT10003', "종목코드", sStockID)
 
-    # OPT10030: 당일거래량상위요청 8.17 시작 (미완) // 8.18 완성
+    def _Request_Info(self, sTrCode, sFieldName, sStockID) -> int:
+
+        self.kiwoom.mlist_output = output_list[sTrCode]
+        self.kiwoom.SetInputValue(sFieldName, sStockID)
+        return self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101') # 여기서 실행이 안됨 0831
+
+    # OPT10030: 당일거래량상위요청 8.18 완성
     def Today_Volume_Top(self, str_market_choice, str_sort_volume, str_credential, str_trade_volume):
         self.kiwoom.mlist_output = output_list['OPT10030']
 

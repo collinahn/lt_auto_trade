@@ -8,7 +8,7 @@ from LoggerLT import Logger
 from SharedMem import SharedMem
 from utilsLT import QueueLT
 from datetime import datetime
-# from KiwoomMain import KiwoomMain
+from KiwoomMain import KiwoomMain
 import constantsLT as const
 
 
@@ -29,7 +29,7 @@ class SendRequest2Api:
 
             self.lst_usr_info = args
             self.cls_SM = SharedMem()
-            # self.cls_KW = KiwoomMain()
+            self.cls_KW = KiwoomMain()
 
             self.log.INFO("SendRequest2Api init")
 
@@ -46,7 +46,11 @@ class SendRequest2Api:
         
 
         if dict_Target["Buy"] == -1 and dict_Target["Sell"] == -1:
-            self.cls_KW.Get_Basic_Stock_Info(str(n_stockID))
+            self.log.DEBUG("요청 보내기 직전")
+            nRet = self.cls_KW.Get_Basic_Stock_Info(str(n_stockID))
+            self.log.DEBUG("요청 보낸 직후")
+            self.log.INFO("Requesting Stock info ", n_stockID)
+            return 1
         #매수매도 진행
         elif dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
             n_quantity = dict_Target["Buy"]
@@ -77,9 +81,7 @@ class SendRequest2Api:
             if q_RequestFmLogic.isEmpty() == True:
                 time.sleep(1)
                 continue
-            
-            
-
+        
             n_ApiCallCnt += self.Send_Request(q_RequestFmLogic)
 
             #api 요청 횟수가 과도하다면 api를 통한 요청이 씹히므로 충분히 쉰다.
@@ -87,6 +89,8 @@ class SendRequest2Api:
             if n_ApiCallCnt == const.API_CALL_LIMIT_PER_SEC:
                 t_Now = datetime.now().timestamp()
                 if t_Now - t_ThrottleTime < 1:
+                    self.log.WARNING("THROTTLING API CALL !! SLEEPING 1 SEC")
                     time.sleep(1)
+                n_ApiCallCnt = 0
                 t_ThrottleTime = datetime.now().timestamp()
 

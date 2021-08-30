@@ -104,10 +104,10 @@ class KiwoomAPI(QAxWidget):
             n_StockID = int(sStockID)
         except Exception as e:
             self.log.ERROR("Cannot Update SharedMem", e)
-            return
+            return False
 
         obj_StockInstance = self.cls_SM.get_instance(n_StockID)
-        if obj_StockInstance == None:
+        if obj_StockInstance is None:
             self.log.CRITICAL(n_StockID, "Stock Does Not Exists")
             return False
 
@@ -115,12 +115,12 @@ class KiwoomAPI(QAxWidget):
         obj_StockInstance.name              = self.mdict_rq_data['OPT10001']['Data'][0]['종목명']       # 종목이름
         obj_StockInstance.price             = self.mdict_rq_data['OPT10001']['Data'][0]['현재가']       # 현재가
         obj_StockInstance.stock_volume_q    = 0        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
-        
+
         obj_StockInstance.price_data_before = {
-                "start":self.mdict_rq_data['OPT10001']['Data'][0]['시가'],              # 시가, 하루에 한번
-                "end":self.mdict_rq_data['OPT10001']['Data'][0]['기준가'],              # 종가, 하루에 한번
-                "highest":self.mdict_rq_data['OPT10001']['Data'][0]['고가'],            # 고가, 하루에 한번
-                "lowest":self.mdict_rq_data['OPT10001']['Data'][0]['저가']              # 저가, 하루에 한번
+            "start":self.mdict_rq_data['OPT10001']['Data'][0]['시가'],              # 시가, 하루에 한번
+            "end":self.mdict_rq_data['OPT10001']['Data'][0]['기준가'],              # 종가, 하루에 한번
+            "highest":self.mdict_rq_data['OPT10001']['Data'][0]['고가'],            # 고가, 하루에 한번
+            "lowest":self.mdict_rq_data['OPT10001']['Data'][0]['저가']              # 저가, 하루에 한번
         }
         obj_StockInstance.updated_time      = str(datetime.now())
         #===========업데이트 끝=============
@@ -150,8 +150,9 @@ class KiwoomAPI(QAxWidget):
 
     # 조회 요청
     def CommRqData(self, sRQName, sTrCode, nPrevNext, sScreenNo):
+        self.log.DEBUG("dynamicCalling CommRqData", sRQName, sTrCode)
         self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
-        self.event_loop_CommRqData.exec_()
+        return self.event_loop_CommRqData.exec_()
 
     # 조회 요청 시 TR의 Input 값을 지정
     def SetInputValue(self, sID, sValue):

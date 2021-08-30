@@ -71,6 +71,6 @@ TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
 
 MFI_STANDARD = 14 # 14일
 
-API_CALL_LIMIT_PER_SEC = 4
+API_CALL_LIMIT_PER_SEC = 5
 
 #-----------Trade------------

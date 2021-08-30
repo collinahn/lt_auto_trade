@@ -203,7 +203,7 @@ class SharedMem(object):
     def push_update_request(self, queue4Request):
         # queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
 
-        if queue4Request.isEmpty() == False:
+        if queue4Request.isFull() == False:
             for n_StockID in self.__mdict_MstObject.keys():
                 dct_InfoRequest = {
                     "StockID": n_StockID,
@@ -212,7 +212,7 @@ class SharedMem(object):
                 }
                 queue4Request.pushQueue(dct_InfoRequest)
 
-            self.log.INFO("Info Request Pushed", self.__mdict_MstObject.keys())
+            self.log.INFO("Info Request Pushed", dct_InfoRequest)
 
     #다른 스레드에서 이거 하나만 호출해도 된다.
     def update_request(self, queue4Request):

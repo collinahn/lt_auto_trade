@@ -31,6 +31,7 @@ class GetPutDB(object):
             for arg in args:
                 if "SharedMem" in str(type(arg)):
                     self.__shared_mem = arg
+                    break
 
             self.log.INFO("GetPutDB init")
 
@@ -234,7 +235,7 @@ class GetPutDB(object):
 if __name__ == "__main__":
     from SharedMem import SharedMem
     sm = SharedMem([123, 123, 123])
-    db = GetPutDB()
+    db = GetPutDB(sm)
     sm.add(111)
     sm.add(222)
     sm.add(333)
