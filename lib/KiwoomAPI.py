@@ -112,15 +112,15 @@ class KiwoomAPI(QAxWidget):
             return False
 
         #-----------여기서 업데이트------------
-        obj_StockInstance.name              = ''       # 종목이름
-        obj_StockInstance.price             = 0        # 현재가
+        obj_StockInstance.name              = self.mdict_rq_data['OPT10001']['Data'][0]['종목명']       # 종목이름
+        obj_StockInstance.price             = self.mdict_rq_data['OPT10001']['Data'][0]['현재가']       # 현재가
         obj_StockInstance.stock_volume_q    = 0        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
         
         obj_StockInstance.price_data_before = {
-                "start":0,                              # 시가, 하루에 한번
-                "end":0,                                # 종가, 하루에 한번
-                "highest":0,                            # 고가, 하루에 한번
-                "lowest":0                              # 저가, 하루에 한번
+                "start":self.mdict_rq_data['OPT10001']['Data'][0]['시가'],              # 시가, 하루에 한번
+                "end":self.mdict_rq_data['OPT10001']['Data'][0]['기준가'],              # 종가, 하루에 한번
+                "highest":self.mdict_rq_data['OPT10001']['Data'][0]['고가'],            # 고가, 하루에 한번
+                "lowest":self.mdict_rq_data['OPT10001']['Data'][0]['저가']              # 저가, 하루에 한번
         }
         obj_StockInstance.updated_time      = str(datetime.now())
         #===========업데이트 끝=============
