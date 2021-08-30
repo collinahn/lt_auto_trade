@@ -55,33 +55,33 @@ class KiwoomMain:
 
     # OPT10085: 계좌수익률요청 
     def Get_Account_Info(self, istr_account_number):
-        self.kiwoom.output_list = output_list['OPT10085']
+        self.kiwoom.mlist_output = output_list['OPT10085']
         self.kiwoom.SetInputValue("계좌번호", istr_account_number)
         self.kiwoom.CommRqData("OPT10085", "OPT10085", 0, "0101")
 
-        self.log.INFO("수익률 관련 정보 = ", self.kiwoom.rq_data['OPT10085']['Data'])
+        self.log.INFO("수익률 관련 정보 = ", self.kiwoom.mdict_rq_data['OPT10085']['Data'])
 
-        return self.kiwoom.rq_data['OPT10085']['Data']
+        return self.kiwoom.mdict_rq_data['OPT10085']['Data']
 
     # OPT10001: 주식기본정보요청 관련 정보 TR_Code.py에 있음 (종목명, 액면가, 자본금, 시가총액, 영업이익, PER, ROE ) 8/8일 작성
     def Get_Basic_Stock_Info(self, istr_stock_code):
-        self.kiwoom.output_list = output_list['OPT10001']
+        self.kiwoom.mlist_output = output_list['OPT10001']
         self.kiwoom.SetInputValue("종목코드", istr_stock_code)
         self.kiwoom.CommRqData("OPT10001", "OPT10001", 0, "0101")
 
-        return self.kiwoom.rq_data['OPT10001']['Data'][0]
+        return self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]
 
     # OPT10003: 체결정보요청 관련 정보 TR_Code.py에 있음 (현재가, 체결강도) 8.8일 작성// 8.9일 수정 완료
     def Chegyul_Info(self, istr_stock_code):
-        self.kiwoom.output_list = output_list['OPT10003']
+        self.kiwoom.mlist_output = output_list['OPT10003']
         self.kiwoom.SetInputValue("종목코드", istr_stock_code)
         self.kiwoom.CommRqData("OPT10003", "OPT10003", 0, "0101")
     
-        return self.kiwoom.rq_data['OPT10003']['Data'][0]
+        return self.kiwoom.mdict_rq_data['OPT10003']['Data'][0]
 
     # OPT10030: 당일거래량상위요청 8.17 시작 (미완) // 8.18 완성
     def Today_Volume_Top(self, str_market_choice, str_sort_volume, str_credential, str_trade_volume):
-        self.kiwoom.output_list = output_list['OPT10030']
+        self.kiwoom.mlist_output = output_list['OPT10030']
 
         # 시장구분 = 전체(0), 코스피(1), 코스닥(101)
         if str_market_choice == "전체":
@@ -129,11 +129,11 @@ class KiwoomMain:
 
         self.kiwoom.CommRqData("OPT10030", "OPT10030", 0, "0101")
 
-        return self.kiwoom.rq_data['OPT10030']['Data']
+        return self.kiwoom.mdict_rq_data['OPT10030']['Data']
         
     # OPT10031: 전일거래량상위요청 8/17 완료
     def Yesterday_Volume_Top(self, str_market_choice, str_volume_choice, str_ranking):
-        self.kiwoom.output_list = output_list['OPT10031']
+        self.kiwoom.mlist_output = output_list['OPT10031']
 
         # 시장구분 = 전체(0), 코스피(1), 코스닥(101)
         if str_market_choice == "전체":
@@ -156,8 +156,8 @@ class KiwoomMain:
 
         self.kiwoom.CommRqData("OPT10031", "OPT10031", 0, "0101")
 
-        self.log.INFO("전일거래량상위요청: ", self.kiwoom.rq_data['OPT10031']['Data'])
-        return self.kiwoom.rq_data['OPT10031']['Data']
+        self.log.INFO("전일거래량상위요청: ", self.kiwoom.mdict_rq_data['OPT10031']['Data'])
+        return self.kiwoom.mdict_rq_data['OPT10031']['Data']
 
 
     # OPT10075: 미체결요청 완성 (8.19)
@@ -168,8 +168,8 @@ class KiwoomMain:
         self.kiwoom.SetInputValue("체결구분", "1")
         self.kiwoom.CommRqData("실시간미체결요청", "opt10075", 0, "0101")
         
-        self.log.INFO("미체결정보: ", self.kiwoom.not_signed_account_dict)
-        return self.kiwoom.not_signed_account_dict
+        self.log.INFO("미체결정보: ", self.kiwoom.dict_not_signed_account)
+        return self.kiwoom.dict_not_signed_account
 #----------#
     # 시장가 매수 (확인) 8.12 수정 // 8.17 수정완료
     def Stock_Buy_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
