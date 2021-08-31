@@ -21,24 +21,31 @@ from LoggerLT import Logger
 from datetime import datetime
 
 class KiwoomAPI(QAxWidget):
+    def __new__(cls):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__new__(cls)
+            cls.log = Logger()
+        cls.log.INFO(cls._instance)
+        return cls._instance
+
     def __init__(self):
-        super().__init__()
-        self.log = Logger()
-        self.login_event_loop = QEventLoop() #로그인 관련 이벤트 루프
-        self.event_loop_CommRqData = QEventLoop()
-        self.event_loop_SendOrder = QEventLoop()
+        cls = type(self)
+        if not hasattr(cls, "_init"):
+            cls._init = True
+            super().__init__()
+            self.login_event_loop = QEventLoop() #로그인 관련 이벤트 루프
+            self.event_loop_CommRqData = QEventLoop()
+            self.event_loop_SendOrder = QEventLoop()
+            
+            # 초기 작업 
+            self.set_kiwoom_api() 
+            self.set_event_slot()
+            self.mdict_rq_data = {}
+            self.mlist_output = []
+            self.mlist_chejan_data = {}
+            self.dict_not_signed_account = {}
 
-        self.cls_SM = SharedMem()
-        
-        # 초기 작업 
-        self.set_kiwoom_api() 
-        self.set_event_slot()
-        self.mdict_rq_data = {}
-        self.mlist_output = []
-        self.mlist_chejan_data = {}
-        self.dict_not_signed_account = {}
-
-        self.log.INFO("KiwoomAPI init")
+            self.log.INFO("KiwoomAPI init")
 
     # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
     def set_kiwoom_api(self):
@@ -74,7 +81,6 @@ class KiwoomAPI(QAxWidget):
         # print(sScrNo, sRQName, sTrCode, sRecordName, sPrevNext, nDataLength, sErrorCode, sMessage, sSplmMsg)    
 
         self.Call_TR(sTrCode, sRQName)
-        self.update_shared_mem(sTrCode)
 
         self.event_loop_CommRqData.exit()    
 
@@ -96,36 +102,6 @@ class KiwoomAPI(QAxWidget):
 
         self.event_loop_SendOrder.exit()
         # print(sGubun, nItemCnt, sFidList)
-
-#-----------------#
-# sharedmem 업데이트 함수 
-    def update_shared_mem(self, sStockID: str) -> bool:
-        try:
-            n_StockID = int(sStockID)
-        except Exception as e:
-            self.log.ERROR("Cannot Update SharedMem", e)
-            return False
-
-        obj_StockInstance = self.cls_SM.get_instance(n_StockID)
-        if obj_StockInstance is None:
-            self.log.CRITICAL(n_StockID, "Stock Does Not Exists")
-            return False
-
-        #-----------여기서 업데이트------------
-        obj_StockInstance.name              = self.mdict_rq_data['OPT10001']['Data'][0]['종목명']       # 종목이름
-        obj_StockInstance.price             = self.mdict_rq_data['OPT10001']['Data'][0]['현재가']       # 현재가
-        obj_StockInstance.stock_volume_q    = 0        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
-
-        obj_StockInstance.price_data_before = {
-            "start":self.mdict_rq_data['OPT10001']['Data'][0]['시가'],              # 시가, 하루에 한번
-            "end":self.mdict_rq_data['OPT10001']['Data'][0]['기준가'],              # 종가, 하루에 한번
-            "highest":self.mdict_rq_data['OPT10001']['Data'][0]['고가'],            # 고가, 하루에 한번
-            "lowest":self.mdict_rq_data['OPT10001']['Data'][0]['저가']              # 저가, 하루에 한번
-        }
-        obj_StockInstance.updated_time      = str(datetime.now())
-        #===========업데이트 끝=============
-
-
 
 
     ## OpenAPI 함수 ##
@@ -150,9 +126,10 @@ class KiwoomAPI(QAxWidget):
 
     # 조회 요청
     def CommRqData(self, sRQName, sTrCode, nPrevNext, sScreenNo):
-        self.log.DEBUG("dynamicCalling CommRqData", sRQName, sTrCode)
-        self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
-        return self.event_loop_CommRqData.exec_()
+        nRet = self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
+        self.log.DEBUG(nRet, "dynamicCalling CommRqData", sRQName, sTrCode)
+        self.event_loop_CommRqData.exec_()
+        return nRet
 
     # 조회 요청 시 TR의 Input 값을 지정
     def SetInputValue(self, sID, sValue):

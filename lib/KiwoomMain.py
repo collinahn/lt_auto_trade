@@ -20,8 +20,10 @@
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
 
 import sys
+from datetime import datetime
 from LoggerLT import Logger
 from KiwoomAPI import KiwoomAPI
+from SharedMem import SharedMem
 from PyQt5.QtWidgets import QApplication
 from TR_Code import output_list
 
@@ -40,6 +42,7 @@ class KiwoomMain:
 
             self.kiwoom = KiwoomAPI()
             self.kiwoom.login()
+            self.cls_SM = SharedMem()
 
             self.log.INFO("KiwoomMain init")
 
@@ -69,10 +72,44 @@ class KiwoomMain:
         return self._Request_Info('OPT10003', "종목코드", sStockID)
 
     def _Request_Info(self, sTrCode, sFieldName, sStockID) -> int:
-
         self.kiwoom.mlist_output = output_list[sTrCode]
         self.kiwoom.SetInputValue(sFieldName, sStockID)
-        return self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101') # 여기서 실행이 안됨 0831
+        nRet = self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101') # 여기서 실행이 안됨 0831
+        if nRet != 0:
+            self.log.CRITICAL("Failed to CommRqData", sStockID, sTrCode)
+            return {}
+
+        self._Update_SM(sStockID)
+
+        return self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]
+
+
+    def _Update_SM(self, sStockID: str, bIsMarketClosed: bool=False) -> bool:
+        try:
+            n_StockID = int(sStockID)
+        except Exception as e:
+            self.log.ERROR("Cannot Update SharedMem", e)
+            return False
+
+        obj_StockInstance = self.cls_SM.get_instance(n_StockID)
+        if obj_StockInstance is None:
+            self.log.CRITICAL(n_StockID, "Stock Does Not Exists")
+            return False
+
+        #-----------여기서 업데이트------------
+        obj_StockInstance.name              = self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['종목명']       # 종목이름
+        obj_StockInstance.price             = int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['현재가'])       # 현재가
+        obj_StockInstance.updated_time      = str(datetime.now())
+
+        if bIsMarketClosed:
+            obj_StockInstance.stock_volume_q    = int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
+            obj_StockInstance.price_data_before = {
+                "start":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['시가']),              # 시가, 하루에 한번
+                "end":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['기준가']),              # 종가, 하루에 한번
+                "highest":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['고가']),            # 고가, 하루에 한번
+                "lowest":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['저가'])              # 저가, 하루에 한번
+            }
+        return True
 
     # OPT10030: 당일거래량상위요청 8.18 완성
     def Today_Volume_Top(self, str_market_choice, str_sort_volume, str_credential, str_trade_volume):
@@ -211,7 +248,12 @@ if __name__ == "__main__":
     api_con = KiwoomMain()
     # 아래는 테스트를 위한 것이니 신경 쓰지 않아도 됨
 
-    # account = api_con.Get_Login_Info()
+    account = api_con.Get_Login_Info()
+    print(account)
+    # api_con.Get_Account_Info(account[4])
+
+    print(api_con.Get_Basic_Stock_Info('005930'))
+
     # log.INFO(api_con.Stock_Buy_Marketprice('035720', account[4], 10))
     # a= api_con.OPT10001('005930')
     # print(a)

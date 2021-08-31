@@ -62,6 +62,8 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return False
         return True
 
@@ -89,6 +91,8 @@ class GetPutDB(object):
             self.log.INFO("Updated", len(list_Info4Execute), "Fields")
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return False
         return True
 
@@ -113,6 +117,8 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return False
         return True
 
@@ -143,6 +149,8 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return False
         return True
 
@@ -168,6 +176,8 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return False
         return True
 
@@ -187,6 +197,8 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return False
         return True
 
@@ -207,6 +219,8 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return False
         return True
 
@@ -227,6 +241,8 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             self.log.ERROR("Exception Occured,", e)
+            if con is not None:
+                con.close()
             return None
         return rows
 

@@ -10,7 +10,7 @@ from utilsLT import QueueLT
 from datetime import datetime
 from KiwoomMain import KiwoomMain
 import constantsLT as const
-
+from threading import Thread
 
 class SendRequest2Api:
     
@@ -25,11 +25,17 @@ class SendRequest2Api:
     def __init__(self, *args, **kwargs):
         cls = type(self)
         if not hasattr(cls, "_init"):
-            cls._init = True
+            if args[0] is None:
+                self.log.CRITICAL("init fail, args do not exists")
+                return
 
-            self.lst_usr_info = args
+            cls._init = True
+            
+            self.lst_usr_info = args[0]
             self.cls_SM = SharedMem()
             self.cls_KW = KiwoomMain()
+
+            self.threads_RqContainer = []
 
             self.log.INFO("SendRequest2Api init")
 
@@ -40,30 +46,34 @@ class SendRequest2Api:
         #현재 처리중인 항목
         dict_Target = queue4Request.getHead()
 
-        #매수매도에 필요한 정보 입력
+        #필요한 정보 입력
         n_stockID = dict_Target["StockID"]
-        n_accountnumber = self.lst_usr_info[-1] if "," in self.lst_usr_info[-1] else self.lst_usr_info[:8]
-        
+        s_stockID = str(n_stockID).zfill(6) #6자리로 고정
+        n_accountnumber = self.lst_usr_info[-1] if "," not in self.lst_usr_info[-1] else self.lst_usr_info[:8]
+        self.log.DEBUG(self.lst_usr_info)
+        self.log.DEBUG("nStockID:", n_stockID, "sStockID:", s_stockID, "account:", n_accountnumber)
 
         if dict_Target["Buy"] == -1 and dict_Target["Sell"] == -1:
-            self.log.DEBUG("요청 보내기 직전")
-            nRet = self.cls_KW.Get_Basic_Stock_Info(str(n_stockID))
+            self.log.DEBUG("요청 보내기 직전", s_stockID)
+            # nRet = self.cls_KW.Get_Basic_Stock_Info(s_stockID)
+            self.threads_RqContainer.append(Thread(target=self.cls_KW.Get_Basic_Stock_Info, args=(s_stockID, )))
+            self.threads_RqContainer[-1].start()
             self.log.DEBUG("요청 보낸 직후")
-            self.log.INFO("Requesting Stock info ", n_stockID)
+            self.log.INFO("Requesting Stock info ", s_stockID)
             return 1
         #매수매도 진행
         elif dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
             n_quantity = dict_Target["Buy"]
-            self.cls_KW.Stock_Buy_Marketprice( n_stockID , n_accountnumber, n_quantity)
+            self.cls_KW.Stock_Buy_Marketprice( s_stockID , n_accountnumber, n_quantity)
             queue4Request.pullQueue()
-            self.log.INFO("Bought", n_stockID , n_accountnumber, n_quantity)
+            self.log.INFO("Bought", s_stockID , n_accountnumber, n_quantity)
             return 1
 
         elif dict_Target["Buy"] == 0 and dict_Target["Sell"] > 0:
             n_quantity = dict_Target["Sell"]
-            self.cls_KW.Stock_Sell_Marketprice( n_stockID, n_accountnumber, n_quantity)
+            self.cls_KW.Stock_Sell_Marketprice( s_stockID, n_accountnumber, n_quantity)
             queue4Request.pullQueue()
-            self.log.INFO("Sold", n_stockID , n_accountnumber, n_quantity)
+            self.log.INFO("Sold", s_stockID , n_accountnumber, n_quantity)
             return 1
 
         # 뭔가 했으면 1 리턴, 안했으면 0리턴(호출 카운트 세기 위함)
@@ -79,6 +89,8 @@ class SendRequest2Api:
         while True:
             #큐가 비어있다면 휴식
             if q_RequestFmLogic.isEmpty() == True:
+                for worker in self.threads_RqContainer:
+                    worker.join(timeout=0.01)
                 time.sleep(1)
                 continue
         
@@ -93,4 +105,5 @@ class SendRequest2Api:
                     time.sleep(1)
                 n_ApiCallCnt = 0
                 t_ThrottleTime = datetime.now().timestamp()
+
 

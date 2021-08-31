@@ -59,6 +59,7 @@ class RunThread(object):
             self.cls_DB = GetPutDB(self.cls_SM)
             self.cls_TL = TradeLogic()
             
+            self.lst_Threads = []
 
             self.log.INFO("RunThread init")
 
@@ -111,22 +112,20 @@ class RunThread(object):
 
     #스레드들을 가동한다.
     def run_thread(self):
-        lst_Threads = []
-
         #-----------스레드 등록-----------
-        lst_Threads.append(Thread(target=self.update_info))
+        self.lst_Threads.append(Thread(target=self.update_info))
         # lst_Threads.append(Thread(target=self.call_price))
-        lst_Threads.append(Thread(target=self.call_api))
+        self.lst_Threads.append(Thread(target=self.call_api))
         #-----------스레드 등록-----------
         
-        for work in lst_Threads:
+        for work in self.lst_Threads:
             work.setDaemon(False)
             work.start()
 
         # self.initialize_info_timer()
         
         # #무한루프 스레드를 돌리기 때문에 이 이후로는 실행되지 않는다.
-        # for work in lst_Threads:
+        # for work in self.lst_Threads:
         #     work.join()
         #     self.log.CRITICAL("Thread Joined !", work)
 

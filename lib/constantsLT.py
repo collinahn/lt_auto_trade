@@ -35,7 +35,7 @@ LV_CRITICAL = 50
 
 #------------DB-----------
 
-DB_SHARED_PATH = './db/shared.sqlite3'
+DB_SHARED_PATH = '../db/shared.sqlite3'
 
 #------------DB-----------
 
@@ -51,7 +51,7 @@ STOCK_VALUE_QUEUE_SIZE = 20
 
 STOCK_COMMON_SIZE = 64
 
-SM_UPDATE_PERIOD = 60
+SM_UPDATE_PERIOD = 3
 
 SECONDS_DAY = 86400
 

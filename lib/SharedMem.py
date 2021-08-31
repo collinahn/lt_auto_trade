@@ -86,7 +86,6 @@ class SharedMem(object):
 
     #인스턴스를 반환한다.
     def get_instance(self, nKey: int) -> object:
-        self.log.DEBUG(self.__mdict_MstObject)
         if self.check_possess(nKey) == True:
             return self.__mdict_MstObject[nKey]
         else:
@@ -192,6 +191,7 @@ class SharedMem(object):
         self.log.INFO("Shared Memory Updated: Quantity")
 
     #마지막 업데이트 시각 갱신 4
+    #현재 kiwoomMain에서 진행
     def update_last_updated(self):
         s_NowTime=str(datetime.now())
 
