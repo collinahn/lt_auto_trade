@@ -19,12 +19,13 @@
 
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
 
+import concurrent
 import sys
 from datetime import datetime
 from LoggerLT import Logger
 from KiwoomAPI import KiwoomAPI
 from SharedMem import SharedMem
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, qApp
 from TR_Code import output_list
 
 class KiwoomMain:
@@ -58,30 +59,29 @@ class KiwoomMain:
 
     # OPT10085: 계좌수익률요청 
     def Get_Account_Info(self, sAccountNo):
-        self._Request_Info('OPT10085', "계좌번호", sAccountNo)
-        self.log.INFO("수익률 관련 정보 = ", self.kiwoom.mdict_rq_data['OPT10085']['Data'])
-
-        return self.kiwoom.mdict_rq_data['OPT10085']['Data']
+        return self._Callback_Info('OPT10085', "계좌번호", sAccountNo)
 
     # OPT10001: 주식기본정보요청 관련 정보 TR_Code.py에 있음 (종목명, 액면가, 자본금, 시가총액, 영업이익, PER, ROE ) 8/8일 작성
     def Get_Basic_Stock_Info(self, sStockID) -> int:
-        return self._Request_Info('OPT10001', "종목코드", sStockID)
+        return self._Callback_Info('OPT10001', "종목코드", sStockID)[0]
 
     # OPT10003: 체결정보요청 관련 정보 TR_Code.py에 있음 (현재가, 체결강도) 8.8일 작성// 8.9일 수정 완료
     def Chegyul_Info(self, sStockID) -> int:
-        return self._Request_Info('OPT10003', "종목코드", sStockID)
+        return self._Callback_Info('OPT10003', "종목코드", sStockID)[0]
 
-    def _Request_Info(self, sTrCode, sFieldName, sStockID) -> int:
+    def _Callback_Info(self, sTrCode, sFieldName, sFieldInfo) -> int:
         self.kiwoom.mlist_output = output_list[sTrCode]
-        self.kiwoom.SetInputValue(sFieldName, sStockID)
+        self.kiwoom.SetInputValue(sFieldName, sFieldInfo)
         nRet = self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101') # 여기서 실행이 안됨 0831
         if nRet != 0:
-            self.log.CRITICAL("Failed to CommRqData", sStockID, sTrCode)
+            self.log.CRITICAL("Failed to CommRqData", sFieldInfo, sTrCode)
             return {}
 
-        self._Update_SM(sStockID)
+        if sFieldName == "종목코드":
+            self._Update_SM(sFieldInfo)
+            self.log.DEBUG(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0])
 
-        return self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]
+        return self.kiwoom.mdict_rq_data[sTrCode]['Data']
 
 
     def _Update_SM(self, sStockID: str, bIsMarketClosed: bool=False) -> bool:
@@ -96,11 +96,6 @@ class KiwoomMain:
             self.log.CRITICAL(n_StockID, "Stock Does Not Exists")
             return False
 
-        #-----------여기서 업데이트------------
-        obj_StockInstance.name              = self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['종목명']       # 종목이름
-        obj_StockInstance.price             = int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['현재가'])       # 현재가
-        obj_StockInstance.updated_time      = str(datetime.now())
-
         if bIsMarketClosed:
             obj_StockInstance.stock_volume_q    = int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
             obj_StockInstance.price_data_before = {
@@ -109,6 +104,12 @@ class KiwoomMain:
                 "highest":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['고가']),            # 고가, 하루에 한번
                 "lowest":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['저가'])              # 저가, 하루에 한번
             }
+        else: 
+            #-----------여기서 업데이트------------
+            obj_StockInstance.name              = self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['종목명']       # 종목이름
+            obj_StockInstance.price             = int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['현재가'].replace('+','').replace('-', ''))       # 현재가
+            obj_StockInstance.updated_time      = str(datetime.now())
+
         return True
 
     # OPT10030: 당일거래량상위요청 8.18 완성
@@ -207,14 +208,14 @@ class KiwoomMain:
     def Stock_Buy_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
         self.kiwoom.SendOrder("시장가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, 0, "03", "")
         self.log.INFO("시장가매수: ", self.kiwoom.mlist_chejan_data)
-        # return self.kiwoom.mlist_chejan_data
+        return self.kiwoom.mlist_chejan_data
 
     # 지정가 매수 8.18 완료 
     def Stock_Buy_Certainprice(self, istr_stock_code, istr_account_number, in_quantity, in_price):
         self.kiwoom.SendOrder("지정가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, in_price, "00", "")
 
         self.log.INFO("지정가매도: " , self.kiwoom.mlist_chejan_data)
-        # return self.kiwoom.mlist_chejan_data
+        return self.kiwoom.mlist_chejan_data
 
     # 시장가 매도 8.12 시작 // 8.18 수정 완료 
     def Stock_Sell_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
@@ -244,15 +245,133 @@ class KiwoomMain:
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    api_con = KiwoomMain()
+    # app = QApplication(sys.argv)
+    # api_con = KiwoomMain()
     # 아래는 테스트를 위한 것이니 신경 쓰지 않아도 됨
 
-    account = api_con.Get_Login_Info()
-    print(account)
-    # api_con.Get_Account_Info(account[4])
+    # lst_account = api_con.Get_Login_Info()
+    # print(lst_account)
+    # accountNo = lst_account[-1] if "," not in lst_account[-1] else lst_account[:8]
+    # print("accountNo", accountNo)
+    # api_con.Get_Account_Info(accountNo)
 
-    print(api_con.Get_Basic_Stock_Info('005930'))
+    # print(api_con.Get_Basic_Stock_Info('005930'))
+
+
+    class Test(object):
+        def __init__(self):
+
+            self.q = QApplication(sys.argv)
+
+            self.cls_KW = KiwoomMain()
+            self.log = Logger()
+
+            self.Loginfo = self.cls_KW.Get_Login_Info()
+
+            self.cls_SM = SharedMem(self.Loginfo)
+            from GetPutDB import GetPutDB
+            self.cls_DB = GetPutDB(self.cls_SM)
+
+            self.cls_SM.add(5930)
+
+            from utilsLT import QueueLT
+            self.iq_Threads = QueueLT(16, "Threads2Request")
+
+            self.log.INFO("init")
+
+        @property
+        def account_info(self) -> list:
+            return self.Loginfo
+
+        def check_success(self):
+            return self.cls_SM.get_instance(5930).name
+
+        def simple_test(self):
+            print(self.samsung())
+
+        # @property
+        def samsung(self):
+            return self.cls_KW.Get_Basic_Stock_Info('005930')
+
+        def callback(self):
+            import time
+            from threading import Thread, active_count
+            lst_threads = [Thread(target=self.simple_test) for _ in range(3)]
+
+            # Thread(target=self.dummy, daemon=True).run()
+            for work in lst_threads:
+                self.log.DEBUG("active thread count: ", active_count())
+                self.log.DEBUG(work)
+                work.run()
+
+            self.log.DEBUG("active thread count: ", active_count())
+
+        def call_concurrent(self):
+            import time
+            from concurrent import futures
+            pool = futures.ThreadPoolExecutor(max_workers=16)
+
+            for _ in range(10):
+                self.iq_Threads.pushQueue(pool.submit(self.simple_test))
+
+
+            print(self.iq_Threads.getList())
+            for p in futures.as_completed(self.iq_Threads.getList()[6:]):
+                p.result()
+
+        def new_process(self, q, cKW, cSM):
+            import os
+            import sys
+            pid = os.getpid()
+            self.log.INFO("pid:", pid)
+
+            cKW.Get_Basic_Stock_Info('005930')
+            print(cSM.get_instance(5930).name)
+
+
+        def call_process(self):
+            from multiprocessing import Process
+            lst_process = [
+                Process(
+                    target=self.new_process,
+                    args=(
+                        self.q,
+                        self.cls_KW,
+                        self.cls_SM,
+                    ),
+                )
+                for _ in range(5)
+            ]
+
+            for work in lst_process:
+                work.start()
+
+            for work in lst_process:
+                work.join()
+
+        def dummy(self):
+            import time
+            while(True):
+                print("check executed while callback")
+                time.sleep(10)
+
+    from threading import Thread
+
+    test = Test()
+
+    # test.simple_test()
+
+    th_obj = Thread(target=test.call_concurrent)
+    # test.call_process()
+
+
+
+    th_obj.start()
+    print(test.check_success())
+    th_obj.join()
+
+    print(test.check_success())
+
 
     # log.INFO(api_con.Stock_Buy_Marketprice('035720', account[4], 10))
     # a= api_con.OPT10001('005930')

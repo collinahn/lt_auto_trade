@@ -17,13 +17,10 @@
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL) # ctrl + c로 종료할 수 있도록
 
-import sys
 import time
 from threading import Thread, Timer
 import constantsLT as const
 from datetime import datetime
-from PyQt5.QtWidgets import QApplication
-from KiwoomMain import KiwoomMain
 from SendRequest2Api import SendRequest2Api
 from SharedMem import SharedMem
 from GetPutDB import GetPutDB
@@ -47,15 +44,10 @@ class RunThread(object):
             cls._init = True
             # if문 내부에서 초기화 진행
 
-            #키움 초기화 및 로그인 처리
-            self.qapp = QApplication(sys.argv)
-            self.cls_KM = KiwoomMain()
             
-            #유저 정보를 받아와서 공유메모리 초기화
-            lst_usr_info = self.cls_KM.Get_Login_Info()
-            self.cls_SM = SharedMem(lst_usr_info)
-            self.cls_SR = SendRequest2Api(lst_usr_info)
+            self.cls_SR = SendRequest2Api()
 
+            self.cls_SM = SharedMem()
             self.cls_DB = GetPutDB(self.cls_SM)
             self.cls_TL = TradeLogic()
             
@@ -65,19 +57,15 @@ class RunThread(object):
 
     # 장마감 이후 18:00에 오늘의 정보로 공유메모리 인스턴스 내부의 정보 업데이트
     # 추후 db 새로운 테이블을 생성해 업데이트 예정 
-    def initialize_info_timer(self):
-
-        while True:
-            #최초 실행시 하루 단위 타이머를 실행시키고 반복문을 벗어난다.
-            if datetime.now().hour > 18:
-                Timer(const.SECONDS_DAY, self.cls_SM.init_after_market_closed()).start()
-                break
-
-            time.sleep(const.LONG_SLEEP_TIME)
+    def _set_timer_initialize_info(self):
+        #최초 실행시 하루 단위 타이머를 실행시키고 반복문을 벗어난다.
+        if datetime.now().hour > 18:
+            Timer(const.SECONDS_DAY, self.cls_SM.init_after_market_closed()).start()
 
 
     #DB 업데이트 후 sharedMem 업데이트 요청 보내는 함수 호출, 60초에 한번
     def update_info(self):
+        b_SetTimer = True
         queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
         t_LastUpdated = datetime.now().timestamp()
 
@@ -90,6 +78,10 @@ class RunThread(object):
                 self.cls_SM.update_request(queue4Request)
 
                 t_LastUpdated = datetime.now().timestamp()
+
+                if b_SetTimer:
+                    # self._set_timer_initialize_info()
+                    b_SetTimer = False
             
             time.sleep(1)
             
@@ -101,40 +93,50 @@ class RunThread(object):
         self.cls_TL.show_me_the_money()
     
     #의사결정 스레드의 요청대로 api호출하여 주문한다.
-    #1초에 최대 4번까지 처리가 가능하다.
+    #1초에 최대 5번까지 처리가 가능하다.
     def call_api(self):
         
-        self.log.INFO("thread start")
+        self.log.INFO("calling kiwoom api")
         
         self.cls_SR.Send_Request_Throttle()
 
 
-
-    #스레드들을 가동한다.
-    def run_thread(self):
+    #스레드를 가동한다.
+    def run_system(self):
         #-----------스레드 등록-----------
         self.lst_Threads.append(Thread(target=self.update_info))
-        # lst_Threads.append(Thread(target=self.call_price))
-        self.lst_Threads.append(Thread(target=self.call_api))
+        # self.lst_Threads.append(Thread(target=self.call_api))
         #-----------스레드 등록-----------
         
+        self.log.DEBUG("threads: ", self.lst_Threads)
+
         for work in self.lst_Threads:
+            self.log.DEBUG("thread: ", work)
             work.setDaemon(False)
             work.start()
 
-        # self.initialize_info_timer()
+        self.call_api()
         
-        # #무한루프 스레드를 돌리기 때문에 이 이후로는 실행되지 않는다.
-        # for work in self.lst_Threads:
-        #     work.join()
-        #     self.log.CRITICAL("Thread Joined !", work)
+        #무한루프 스레드를 돌리기 때문에 이 이후로는 실행되지 않는다.
+        for work in self.lst_Threads:
+            work.join()
+            self.log.CRITICAL("Thread Joined !", work)
 
 
 if __name__ == "__main__":
 
-    rt = RunThread()
-    rt.run_thread()
 
-    db = GetPutDB()
-    sm = SharedMem(db)
+    rt = RunThread()
+    sm = SharedMem()
     sm.add(5930)
+    sm.add(20)
+    sm.add(70)
+    sm.add(80)
+    sm.add(1040)
+    sm.add(9415)
+    sm.add(35720)
+    sm.add(28260)
+    sm.add(29460)
+    sm.add(28050)
+
+    rt.run_system()

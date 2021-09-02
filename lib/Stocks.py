@@ -13,7 +13,7 @@
 import constantsLT as const
 from LoggerLT import Logger
 from utilsLT import QueueLT
-from datetime import datetime
+from datetime import date, datetime
 import time
 
 class Stock(object):
@@ -79,10 +79,10 @@ class Stock(object):
 
     #파이썬 gc 주기에 의해 즉시 반영이 안 될수도 있음
     def __del__(self):
-        print("Delete Stock", self.__in_Ticker)
+        print(datetime.now(), "Stock Deleted", self.__in_Ticker)
         Stock.__mn_TotalStock -= 1
         Stock.__mdict_ObjCalled[self.__in_Ticker] = False
-        del(Stock.__mdict_Obj[self.__in_Ticker]) #제거되고 나면 새로운 인스턴스 생성
+        del(Stock.__mdict_Obj[self.__in_Ticker]) #제거되고 나면 추후 추가될 때 새로 인스턴스 생성
 
     @property
     def ticker(self) -> int:

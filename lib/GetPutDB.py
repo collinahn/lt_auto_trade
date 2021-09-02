@@ -9,6 +9,7 @@
 
 import sqlite3
 from datetime import datetime
+from sqlite3.dbapi2 import Connection
 import constantsLT as const
 from LoggerLT import Logger
 
@@ -39,11 +40,12 @@ class GetPutDB(object):
     #만약 한 번에 한 주씩 업데이트 하지 않고 보유한 인스턴스들에 대한 DB업데이트를 한 번에 한다면?
     #deprecated
     def update_property(self, nStockID: int) -> bool:
-        obj_Instance = self.__shared_mem.get_instance(nStockID)
-        s_Name = obj_Instance.name
-        n_Quantity = obj_Instance.quantity
-        n_Value = obj_Instance.price
-        s_Time = obj_Instance.updated_time
+        con: Connection = None
+        obj_Instance    = self.__shared_mem.get_instance(nStockID)
+        s_Name: str     = obj_Instance.name
+        n_Quantity: int = obj_Instance.quantity
+        n_Value: int    = obj_Instance.price
+        s_Time: str     = obj_Instance.updated_time
 
         try:
             con = sqlite3.connect(self.__db_path)
@@ -61,16 +63,14 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return False
+            return self.exception_handling(e, con)
         return True
 
     #공유메모리에 존재하는 데이터들을 한 번에 업데이트한다.
     #2021.08.08 추가, 아직 테스트 못함
     def update_properties(self) -> bool:
-        list_Info4Execute = self.__shared_mem.get_property_info4sql()
+        con: Connection = None
+        list_Info4Execute: list = self.__shared_mem.get_property_info4sql()
 
         try:
             con = sqlite3.connect(self.__db_path)
@@ -87,21 +87,19 @@ class GetPutDB(object):
 
             con.commit()
             con.close()
-            
+
             self.log.INFO("Updated", len(list_Info4Execute), "Fields")
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return False
+            return self.exception_handling(e, con)
         return True
 
 
 
     # 사용자가 사용하는 주식인지 여부를 업데이트한다 ("T" 트래킹 중, "N" 트래킹 안함)
     def update_stock_tracking_info(self, nStockID: int, bUsed=True) -> bool:
-        c_CurruentState = 'N' if bUsed == False else 'T'
-        s_NowTime=str(datetime.now())
+        con: Connection = None
+        c_CurruentState: str    = 'N' if bUsed == False else 'T'
+        s_NowTime: str          =str(datetime.now())
 
         try:
             con = sqlite3.connect(self.__db_path)
@@ -112,24 +110,22 @@ class GetPutDB(object):
                 `timeStateChange`=? \
                 WHERE `stockID`=?;"""
             curs.execute(query, (c_CurruentState, s_NowTime, nStockID))
-            
+
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return False
+            return self.exception_handling(e, con)
         return True
 
     #최초 실행시 db 칼럼을 초기화한다.
     def add_property_column(self, nStockID: int) -> bool:
+        con: Connection = None
         try:
-            obj_Instance = self.__shared_mem.get_instance(nStockID)
-            s_Name = obj_Instance.name
-            n_Quantity = obj_Instance.quantity
-            n_Value = obj_Instance.price
-            s_Time = obj_Instance.updated_time
+            obj_Instance    = self.__shared_mem.get_instance(nStockID)
+            s_Name: str     = obj_Instance.name
+            n_Quantity: int = obj_Instance.quantity
+            n_Value: int    = obj_Instance.price
+            s_Time: str     = obj_Instance.updated_time
 
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
@@ -148,15 +144,13 @@ class GetPutDB(object):
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return False
+            return self.exception_handling(e, con)
         return True
 
     #일봉 데이터(시가, 종가, 최고가, 최저가), 거래량 개별로 db에 저장한다. update 2021.08.15 by taeyoung
     def add_candle_hist(self, nStockID: int, nStockVolume: int, dictDataSet: dict) -> bool:
-        s_NowTime=str(datetime.now().strftime("%x"))  # 08/15/21
+        con: Connection = None
+        s_NowTime: str = str(datetime.now().strftime("%x"))  # 08/15/21
 
         try:
             con = sqlite3.connect(self.__db_path)
@@ -171,19 +165,17 @@ class GetPutDB(object):
                         dictDataSet["lowest"], 
                         nStockVolume,
                         s_NowTime))
-            
+
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return False
+            return self.exception_handling(e, con)
         return True
 
     #일봉 데이터(시가, 종가, 최고가, 최저가), 거래량 한 번에 공유메모리를 참조하여 db에 저장한다. update 2021.08.15 by taeyoung
     def add_candle_hist_all(self) -> bool:
-        list_Info4Execute = self.__shared_mem.get_candle_info4sql()
+        con: Connection = None
+        list_Info4Execute: list = self.__shared_mem.get_candle_info4sql()
         # s_NowTime=str(datetime.now().strftime("%x")) 위에서 넘어옴
 
         try:
@@ -192,21 +184,19 @@ class GetPutDB(object):
             curs = con.cursor()
             query = """INSERT INTO tHistoryCandle Values(?, ?, ?, ?, ?, ?, ?);"""
             curs.executemany(query, list_Info4Execute)
-            
+
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return False
+            return self.exception_handling(e, con)
         return True
 
     # 거래 정보 업데이트
     # tStockProperties가 업데이트 될 때 trigger로 기록되도록 하는 것도 나쁘지 않음
     # nQuantity: + 사자 - 팔자
     def add_transaction_hist(self, nStockID: int, nQuantity: int, nPrice: int) -> bool:
-        s_NowTime=str(datetime.now())
+        con: Connection = None
+        s_NowTime: str = str(datetime.now())
 
         try:
             con = sqlite3.connect(self.__db_path)
@@ -214,18 +204,17 @@ class GetPutDB(object):
             curs = con.cursor()
             query = """INSERT INTO tHistoryTransaction Values(?, ?, ?, ?);"""
             curs.execute(query, (nStockID, nQuantity, nPrice, s_NowTime))
-            
+
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return False
+            return self.exception_handling(e, con)
         return True
 
     # 거래내역 얻어오기
     def get_history_by_id(self, nStockID: int, nNumberFetch: int):
+        con: Connection = None
+
         try:
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
@@ -236,15 +225,18 @@ class GetPutDB(object):
                 LIMIT ?"""
             curs.execute(query, (nStockID, nNumberFetch))
             rows = curs.fetchall()
-            
+
             con.commit()
             con.close()
         except Exception as e:
-            self.log.ERROR("Exception Occured,", e)
-            if con is not None:
-                con.close()
-            return None
+            return self.exception_handling(e, con)
         return rows
+
+    def exception_handling(self, error, connection, ret=False) -> False:
+        self.log.ERROR('Exception Occured,', error)
+        if connection is not None:
+            connection.close()
+        return ret
 
 
 

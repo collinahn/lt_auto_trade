@@ -51,7 +51,7 @@ STOCK_VALUE_QUEUE_SIZE = 20
 
 STOCK_COMMON_SIZE = 64
 
-SM_UPDATE_PERIOD = 3
+SM_UPDATE_PERIOD = 30
 
 SECONDS_DAY = 86400
 
@@ -72,5 +72,7 @@ TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
 MFI_STANDARD = 14 # 14일
 
 API_CALL_LIMIT_PER_SEC = 5
+
+ONE_SEC = 1
 
 #-----------Trade------------
