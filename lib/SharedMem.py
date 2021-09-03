@@ -142,18 +142,16 @@ class SharedMem(object):
         return datetime.now().hour > 18
 
     def init_after_market_closed(self) -> bool:
-        for obj_Target in self.__mdict_MstObject.values():
-            n_TotalTrade = 0    #WrapperClass.WrapperMethod()
-            obj_Target.stock_volume_q = n_TotalTrade
+        q_RequestUpdate = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
 
-            dict_PriceData = {
-                "start":0,      #WrapperClass.WrapperMethod()
-                "end":0,        #WrapperClass.WrapperMethod()
-                "highest":0,    #WrapperClass.WrapperMethod()
-                "lowest":0      #WrapperClass.WrapperMethod()
+        for n_StockID in self.__mdict_MstObject.keys():
+            dct_InfoRequest = {
+                "StockID": n_StockID,
+                "Buy": const.UPDATE_INFO,
+                "Sell": const.UPDAE_AFTER_CLOSED,
             }
-            obj_Target.price_data_before = dict_PriceData # 업데이트
-            obj_Target.price_data_queue = obj_Target.price_data_before #큐에 저장
+            q_RequestUpdate.pushQueue(dct_InfoRequest)
+            self.log.INFO("Info Request at 6PM Pushed", dct_InfoRequest)
 
 
     #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 timer로 호출
@@ -206,8 +204,8 @@ class SharedMem(object):
             for n_StockID in self.__mdict_MstObject.keys():
                 dct_InfoRequest = {
                     "StockID": n_StockID,
-                    "Buy": -1,
-                    "Sell": -1
+                    "Buy": const.UPDATE_INFO,
+                    "Sell": const.UPDATE_BEFORE_CLOSED,
                 }
                 queue4Request.pushQueue(dct_InfoRequest)
                 self.log.INFO("Info Request Pushed", dct_InfoRequest)

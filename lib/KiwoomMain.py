@@ -62,29 +62,29 @@ class KiwoomMain:
         return self._Callback_Info('OPT10085', "계좌번호", sAccountNo)
 
     # OPT10001: 주식기본정보요청 관련 정보 TR_Code.py에 있음 (종목명, 액면가, 자본금, 시가총액, 영업이익, PER, ROE ) 8/8일 작성
-    def Get_Basic_Stock_Info(self, sStockID) -> int:
-        return self._Callback_Info('OPT10001', "종목코드", sStockID)[0]
+    def Get_Basic_Stock_Info(self, sStockID, bMarketClosed=False) -> int:
+        return self._Callback_Info('OPT10001', "종목코드", sStockID, bMarketClosed)[0]
 
     # OPT10003: 체결정보요청 관련 정보 TR_Code.py에 있음 (현재가, 체결강도) 8.8일 작성// 8.9일 수정 완료
     def Chegyul_Info(self, sStockID) -> int:
         return self._Callback_Info('OPT10003', "종목코드", sStockID)[0]
 
-    def _Callback_Info(self, sTrCode, sFieldName, sFieldInfo) -> int:
+    def _Callback_Info(self, sTrCode, sFieldName, sFieldInfo, bMarketClosed=False) -> int:
         self.kiwoom.mlist_output = output_list[sTrCode]
         self.kiwoom.SetInputValue(sFieldName, sFieldInfo)
-        nRet = self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101') # 여기서 실행이 안됨 0831
+        nRet = self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101')
         if nRet != 0:
             self.log.CRITICAL("Failed to CommRqData", sFieldInfo, sTrCode)
             return {}
 
         if sFieldName == "종목코드":
-            self._Update_SM(sFieldInfo)
+            self._Update_SM(sFieldInfo, sTrCode, bMarketClosed)
             self.log.DEBUG(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0])
 
         return self.kiwoom.mdict_rq_data[sTrCode]['Data']
 
 
-    def _Update_SM(self, sStockID: str, bIsMarketClosed: bool=False) -> bool:
+    def _Update_SM(self, sStockID: str, sTrCode: str, bIsMarketClosed: bool=False) -> bool:
         try:
             n_StockID = int(sStockID)
         except Exception as e:
@@ -97,17 +97,17 @@ class KiwoomMain:
             return False
 
         if bIsMarketClosed:
-            obj_StockInstance.stock_volume_q    = int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
+            obj_StockInstance.stock_volume_q    = int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
             obj_StockInstance.price_data_before = {
-                "start":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['시가']),              # 시가, 하루에 한번
-                "end":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['기준가']),              # 종가, 하루에 한번
-                "highest":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['고가']),            # 고가, 하루에 한번
-                "lowest":int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['저가'])              # 저가, 하루에 한번
+                "start":    int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['시가'].replace('+','').replace('-', '')),              # 시가, 하루에 한번
+                "end":      int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가'].replace('+','').replace('-', '')),              # 종가, 하루에 한번
+                "highest":  int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['고가'].replace('+','').replace('-', '')),            # 고가, 하루에 한번
+                "lowest":   int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['저가'].replace('+','').replace('-', ''))              # 저가, 하루에 한번
             }
         else: 
             #-----------여기서 업데이트------------
-            obj_StockInstance.name              = self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['종목명']       # 종목이름
-            obj_StockInstance.price             = int(self.kiwoom.mdict_rq_data['OPT10001']['Data'][0]['현재가'].replace('+','').replace('-', ''))       # 현재가
+            obj_StockInstance.name              = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['종목명']       # 종목이름
+            obj_StockInstance.price             = int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가'].replace('+','').replace('-', ''))       # 현재가
             obj_StockInstance.updated_time      = str(datetime.now())
 
         return True

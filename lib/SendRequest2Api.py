@@ -59,11 +59,11 @@ class SendRequest2Api:
         # self.log.DEBUG(self.lst_usr_info)
         # self.log.DEBUG("nStockID:", n_stockID, "sStockID:", s_stockID, "account:", s_AccountNo)
         try:
-            if dict_Target["Buy"] == -1 and dict_Target["Sell"] == -1:
-                self.iq_Threads.pushQueue(Thread(target=self.cls_KW.Get_Basic_Stock_Info, args=(s_stockID, )))
+            if dict_Target["Buy"] == const.UPDATE_INFO:
+                bInitAfterMarketClosed = None if dict_Target["Sell"] == const.UPDATE_BEFORE_CLOSED else True
+                self.iq_Threads.pushQueue(Thread(target=self.cls_KW.Get_Basic_Stock_Info, args=(s_stockID, bInitAfterMarketClosed, )))
                 self.iq_Threads.getTail().run()
                 self.log.INFO("Requested Stock info ", s_stockID)
-            #매수매도 진행
             elif dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
                 n_quantity = dict_Target["Buy"]
                 self.cls_KW.Stock_Buy_Marketprice( s_stockID , s_AccountNo, n_quantity)

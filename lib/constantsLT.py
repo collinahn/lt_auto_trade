@@ -57,6 +57,12 @@ SECONDS_DAY = 86400
 
 LONG_SLEEP_TIME = 100
 
+UPDATE_INFO = -1
+
+UPDATE_BEFORE_CLOSED = -1
+
+UPDAE_AFTER_CLOSED = -2
+
 #--------SharedMemory--------
 
 
@@ -71,7 +77,7 @@ TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
 
 MFI_STANDARD = 14 # 14일
 
-API_CALL_LIMIT_PER_SEC = 5
+API_CALL_LIMIT_PER_SEC = 4 #5
 
 ONE_SEC = 1
 

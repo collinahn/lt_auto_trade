@@ -59,28 +59,27 @@ class RunThread(object):
     # 추후 db 새로운 테이블을 생성해 업데이트 예정 
     def _set_timer_initialize_info(self):
         #최초 실행시 하루 단위 타이머를 실행시키고 반복문을 벗어난다.
-        if datetime.now().hour > 18:
-            Timer(const.SECONDS_DAY, self.cls_SM.init_after_market_closed()).start()
+        Timer(const.SECONDS_DAY, self.cls_SM.init_after_market_closed()).start()
 
 
     #DB 업데이트 후 sharedMem 업데이트 요청 보내는 함수 호출, 60초에 한번
     def update_info(self):
         b_SetTimer = True
         queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
-        t_LastUpdated = datetime.now().timestamp()
+        t_LastUpdated = datetime.now()
 
         self.log.INFO("thread start")
 
         while True:
-            t_Now = datetime.now().timestamp()
-            if t_Now - t_LastUpdated > const.SM_UPDATE_PERIOD:
+            t_Now = datetime.now()
+            if t_Now.timestamp() - t_LastUpdated.timestamp() > const.SM_UPDATE_PERIOD:
                 self.cls_DB.update_properties()
                 self.cls_SM.update_request(queue4Request)
 
-                t_LastUpdated = datetime.now().timestamp()
+                t_LastUpdated = datetime.now()
 
-                if b_SetTimer:
-                    # self._set_timer_initialize_info()
+                if b_SetTimer and t_Now.hour > 18:
+                    self._set_timer_initialize_info()
                     b_SetTimer = False
             
             time.sleep(1)
@@ -129,7 +128,7 @@ if __name__ == "__main__":
     rt = RunThread()
     sm = SharedMem()
     sm.add(5930)
-    sm.add(20)
+    sm.add(5360)
     sm.add(70)
     sm.add(80)
     sm.add(1040)
