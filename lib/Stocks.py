@@ -49,13 +49,13 @@ class Stock(object):
             #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
             self.__is_StockName = ""
             self.__in_StockCurrentPrice = 0
-            self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE, "StockValue") #주가 저장
+            self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE, str(self.__in_Ticker)+"StockValue") #주가 저장
             self.__in_StockPriceBought = 0
             self.__in_StockQuantity = 0
-            self.__iq_TotalTradeVolume = QueueLT(const.STOCK_COMMON_SIZE, "TradeVolumePerDay")
+            self.__iq_TotalTradeVolume = QueueLT(const.STOCK_COMMON_SIZE, str(self.__in_Ticker)+"TradeVolume")
             self.__is_LastUpdated = ""
             self.__is_LastAdded = str(datetime.now())
-            self.__id_DayBought = time.strftime("%x", time.localtime(time.time())) #  08/15/21 거래된 날을 따저 추가적인 거래가 일어나지 않도록 한다.
+            self.__is_DayBought = time.strftime("%x", time.localtime(time.time())) #  08/15/21 거래된 날을 따저 추가적인 거래가 일어나지 않도록 한다.
             # self.__if_StockFluncDay = 0.0
             # self.__if_StockFluncHour = 0.0
             # self.__if_StockFlunc30Min = 0.0
@@ -67,7 +67,7 @@ class Stock(object):
                 "highest":0,
                 "lowest":0
             }
-            self.__iq_PriceDataQueue = QueueLT(const.STOCK_COMMON_SIZE, "PriceData") # n일간의 가격 정보를 저장한다.
+            self.__iq_PriceDataQueue = QueueLT(const.STOCK_COMMON_SIZE, str(self.__in_Ticker)+"PriceData") # n일간의 가격 정보를 저장한다.
 
             Stock.__mn_TotalStock += 1
             Stock.__mset_Stocks.add(args[0])
@@ -103,6 +103,10 @@ class Stock(object):
     @property
     def price(self) -> int:
         return self.__in_StockCurrentPrice
+
+    @property
+    def price_q(self) -> QueueLT:
+        return self.__iq_StockValues
 
     #하루 단위 거래량 큐의 시작 인덱스와 큐에 해당하는 리스트를 튜플로 반환
     @property
@@ -147,7 +151,7 @@ class Stock(object):
     #래리 윌리엄스 전략
     @property
     def day_bought(self) -> int: 
-        return self.__id_DayBought
+        return self.__is_DayBought
 
     @property
     def price_data_before(self) -> dict:
@@ -285,7 +289,7 @@ class Stock(object):
     #래리 윌리엄스 전략
     @day_bought.setter
     def day_bought(self, dayBought: int):
-        self.__id_DayBought = dayBought
+        self.__is_DayBought = dayBought
 
     #[전일시가, 전일종가] 로 매일 초기화 반드시 해야함, 자동으로 큐에 들어감
     @price_data_before.setter

@@ -55,6 +55,49 @@ class RunThread(object):
 
             self.log.INFO("RunThread init")
 
+    #콘솔 창에 종목코드(int)입력하면 디버깅 정보를 출력하게해주는 스레드
+    def _debug(self):
+        while True:
+            s_input = input()
+            if s_input == '':
+                print(self.cls_SM.get_current_possess(), self.cls_SM.get_current_ticks())
+                continue
+
+            try:
+                int(s_input)
+            except ValueError:
+                self.log.DEBUG("enter int")
+                continue
+
+            obj = self.cls_SM.get_instance(int(s_input))
+            if obj is None:
+                self.log.DEBUG("Non Existing Stock ID")
+                continue
+
+            print( \
+f'==============DEBUG_INFO {obj.ticker}====================\n \
+\n \
+\n \
+name: {obj.name} \n \
+price: {obj.price} \n \
+volume: {obj.stock_volume_n} \n \
+logic_option: {obj.logic_option} \n \
+day info: {obj.price_data_before} \n \
+\n \
+price queue: {obj.price_q.getList()}\n \
+volume queue: {obj.stock_volume_q}\n \
+dayinfo queue: {obj.price_data_queue.getList()}\n \
+\n \
+\n \
+pricebought: {obj.price_bought} \n \
+quantity: {obj.quantity} \n \
+\n \
+\n \
+\n \
+\n \
+==============DEBUG_INFO {obj.ticker}====================\n'
+                )
+
     # 장마감 이후 18:00에 오늘의 정보로 공유메모리 인스턴스 내부의 정보 업데이트
     # 추후 db 새로운 테이블을 생성해 업데이트 예정 
     def _set_timer_initialize_info(self):
@@ -65,7 +108,7 @@ class RunThread(object):
     #DB 업데이트 후 sharedMem 업데이트 요청 보내는 함수 호출, 60초에 한번
     def update_info(self):
         b_SetTimer = True
-        queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
+        # queue4Request = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
         t_LastUpdated = datetime.now()
 
         self.log.INFO("thread start")
@@ -73,15 +116,15 @@ class RunThread(object):
         while True:
             t_Now = datetime.now()
             if t_Now.timestamp() - t_LastUpdated.timestamp() > const.SM_UPDATE_PERIOD:
-                self.cls_DB.update_properties()
-                self.cls_SM.update_request(queue4Request)
-
-                t_LastUpdated = datetime.now()
-
                 if b_SetTimer and t_Now.hour > 18:
                     self._set_timer_initialize_info()
                     b_SetTimer = False
             
+                self.cls_DB.update_properties()
+                self.cls_SM.update_request()
+
+                t_LastUpdated = datetime.now()
+
             time.sleep(1)
             
     #매매의사결정 함수 호출
@@ -99,24 +142,30 @@ class RunThread(object):
         
         self.cls_SR.Send_Request_Throttle()
 
+    #db의 tracking info 참조하여 공유메모리에 올림(실행 후 초기화시 실행)
+    def load_db(self):
+        pass
 
     #스레드를 가동한다.
     def run_system(self):
+        self.load_db()
+
         #-----------스레드 등록-----------
+        self.lst_Threads.append(Thread(target=self._debug))
         self.lst_Threads.append(Thread(target=self.update_info))
-        # self.lst_Threads.append(Thread(target=self.call_api))
+        # self.lst_Threads.append(Thread(target=self.call_price))
         #-----------스레드 등록-----------
         
         self.log.DEBUG("threads: ", self.lst_Threads)
 
         for work in self.lst_Threads:
-            self.log.DEBUG("thread: ", work)
+            self.log.DEBUG("thread start: ", work)
             work.setDaemon(False)
             work.start()
 
         self.call_api()
         
-        #무한루프 스레드를 돌리기 때문에 이 이후로는 실행되지 않는다.
+        #무한루프를 돌리기 때문에 이 이후로는 실행되지 않는다.
         for work in self.lst_Threads:
             work.join()
             self.log.CRITICAL("Thread Joined !", work)

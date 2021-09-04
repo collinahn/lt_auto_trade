@@ -59,9 +59,9 @@ class Logger:
             cls.__logger = logging.getLogger('LoggerLT')
             cls.__logger.setLevel(logging.DEBUG)
 
-            cls.formatter = logging.Formatter('%(asctime)s [%(filename)s:%(funcName)s:%(lineno)s] [%(levelname)s] >> %(message)s')
+            cls.formatter = logging.Formatter('%(asctime)s [%(filename)-20s:%(funcName)-21s:%(lineno)-5s] [%(levelname)s] >> %(message)s')
             # cls.fileHandler = logging.FileHandler(const.LOG_FILE_PATH)
-            cls.fileHandler = logging.handlers.RotatingFileHandler(const.LOG_FILE_PATH, maxBytes=const.MAX_BYTES, backupCount=const.BACKUP_CNT)
+            cls.fileHandler = logging.handlers.RotatingFileHandler(const.LOG_FILE_PATH, maxBytes=const.MAX_BYTES, backupCount=const.BACKUP_CNT, encoding='UTF-8')
             cls.streamHandler = logging.StreamHandler()
             cls.fileHandler.setFormatter(cls.formatter)
             cls.streamHandler.setFormatter(cls.formatter)

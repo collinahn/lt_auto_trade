@@ -12,6 +12,7 @@
 
 from typing import Dict, List
 from datetime import datetime
+import time
 from Stocks import Stock
 from LoggerLT import Logger
 from utilsLT import QueueLT
@@ -65,6 +66,7 @@ class SharedMem(object):
         self.__mdict_MstObject[nKey] = Stock(nKey)
 
         self.log.INFO("New Stock Instance:", nKey)
+        self.request_initial_info(nKey)
 
         self.cls_DB.add_property_column(nKey)
         self.cls_DB.update_stock_tracking_info(nKey)
@@ -136,22 +138,36 @@ class SharedMem(object):
         
         return list_Ret
 
+    #매매의사결정에 필요한 데이터를 미리 받아와 업데이트하는 주문을 넣는다.
+    def request_initial_info(self, nStockID: int):
+        if self.iq_RequestQueue.isFull() == False:
+            dct_InfoRequest = {
+                "StockID": nStockID,
+                "Buy": const.INITIALIZE_INFO,
+                "Sell": const.RESERVED,
+            }
+            self.iq_RequestQueue.pushQueue(dct_InfoRequest)
+            self.log.INFO("Info Request Pushed", dct_InfoRequest)
+        else:
+            self.log.WARNING("Attempting Request After 1 Sec")
+            time.sleep(1)
+            self.request_initial_info(nStockID) #기다렸다 다시시도
+
+
     #변수 업데이트: 18시
     #현재시간을 체크해 장이 마감되었는지 확인한다.
     def is_market_closed(self) -> bool:
         return datetime.now().hour > 18
 
     def init_after_market_closed(self) -> bool:
-        q_RequestUpdate = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
-
         for n_StockID in self.__mdict_MstObject.keys():
             dct_InfoRequest = {
                 "StockID": n_StockID,
                 "Buy": const.UPDATE_INFO,
                 "Sell": const.UPDAE_AFTER_CLOSED,
             }
-            q_RequestUpdate.pushQueue(dct_InfoRequest)
-            self.log.INFO("Info Request at 6PM Pushed", dct_InfoRequest)
+            self.iq_RequestQueue.pushQueue(dct_InfoRequest)
+            self.log.INFO("Info Request After 6PM Pushed", dct_InfoRequest)
 
 
     #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 timer로 호출
@@ -198,22 +214,22 @@ class SharedMem(object):
 
         self.log.INFO("Shared Memory Updated: Updated Time")
 
-    def push_update_request(self, queue4Request):
+    def push_update_request(self):
         #바쁘지 않을 때 실행
-        if queue4Request.isFull() == False:
+        if self.iq_RequestQueue.isFull() == False:
             for n_StockID in self.__mdict_MstObject.keys():
                 dct_InfoRequest = {
                     "StockID": n_StockID,
                     "Buy": const.UPDATE_INFO,
                     "Sell": const.UPDATE_BEFORE_CLOSED,
                 }
-                queue4Request.pushQueue(dct_InfoRequest)
+                self.iq_RequestQueue.pushQueue(dct_InfoRequest)
                 self.log.INFO("Info Request Pushed", dct_InfoRequest)
 
 
     #다른 스레드에서 이거 하나만 호출해도 된다.
-    def update_request(self, queue4Request):
-        self.push_update_request(queue4Request)
+    def update_request(self):
+        self.push_update_request()
         # self.update_current_stock_price()
         # self.update_average_price_bought()
         # self.update_current_stock_quantity()

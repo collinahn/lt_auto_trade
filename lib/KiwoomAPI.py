@@ -41,7 +41,7 @@ class KiwoomAPI(QAxWidget):
             self.set_kiwoom_api() 
             self.set_event_slot()
             self.mdict_rq_data = {}
-            self.mlist_output = []
+            self.dynamicmlist_output = []
             self.mlist_chejan_data = {}
             self.dict_not_signed_account = {}
 
@@ -127,7 +127,10 @@ class KiwoomAPI(QAxWidget):
     # 조회 요청
     def CommRqData(self, sRQName, sTrCode, nPrevNext, sScreenNo):
         nRet = self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
-        self.log.DEBUG(nRet, "dynamicCalling CommRqData", sRQName, sTrCode)
+        if nRet != 0:
+            self.log.CRITICAL("Failed to Request Data From Api", sRQName, sTrCode)
+            self.log.INFO("Error Code", nRet, "Event Loop not Executed")
+            return nRet
         self.event_loop_CommRqData.exec_()
         return nRet
 

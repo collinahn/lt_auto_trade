@@ -11,6 +11,7 @@
 
 from LoggerLT import Logger
 import threading
+from datetime import datetime
 
 class QueueLT:
     __mset_Instance = set()
@@ -108,6 +109,16 @@ class QueueLT:
 
         return n_NextTailPointIdx == self.__in_HeadPointIdx             # 테일+1 == 헤드 => 버퍼 full
 
+
+def getIntLT(sData: str, sDebugData=None):
+    try:
+        return int(sData.strip().replace('+','').replace('-', ''))
+    except ValueError as ve:
+        Logger.CRITICAL("Cannot Convert Data to Int", sData, sDebugData, ve)
+        return -1
+
+def getTodayYmdLT():
+    return datetime.now().strftime("%Y%m%d")
 
 
 if __name__ == "__main__":

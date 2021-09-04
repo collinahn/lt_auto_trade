@@ -16,6 +16,8 @@
 # 2021-08-22 Queue에 있는 정보를 바탕으로 실제로 API에 매수/매도 요청을 보내는 함수 작성
 # 2021-08-23 Queue함수 간략하게 작성(보완 필요)
 
+# 2021.09.05 일부 함수 리팩토링 및 주식 일봉차트조회요청함수 추가 by taeyoung
+
 
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
 
@@ -27,6 +29,8 @@ from KiwoomAPI import KiwoomAPI
 from SharedMem import SharedMem
 from PyQt5.QtWidgets import QApplication, qApp
 from TR_Code import output_list
+import utilsLT as utils
+import constantsLT as const
 
 class KiwoomMain:
     def __new__(cls):
@@ -62,20 +66,20 @@ class KiwoomMain:
         return self._Callback_Info('OPT10085', "계좌번호", sAccountNo)
 
     # OPT10001: 주식기본정보요청 관련 정보 TR_Code.py에 있음 (종목명, 액면가, 자본금, 시가총액, 영업이익, PER, ROE ) 8/8일 작성
-    def Get_Basic_Stock_Info(self, sStockID, bMarketClosed=False) -> int:
-        return self._Callback_Info('OPT10001', "종목코드", sStockID, bMarketClosed)[0]
+    def Get_Basic_Stock_Info(self, sStockID, bMarketClosed=False):
+        return self._Callback_Info('OPT10001', "종목코드", sStockID, bMarketClosed)
 
     # OPT10003: 체결정보요청 관련 정보 TR_Code.py에 있음 (현재가, 체결강도) 8.8일 작성// 8.9일 수정 완료
-    def Chegyul_Info(self, sStockID) -> int:
-        return self._Callback_Info('OPT10003', "종목코드", sStockID)[0]
+    def Chegyul_Info(self, sStockID):
+        return self._Callback_Info('OPT10003', "종목코드", sStockID)
 
-    def _Callback_Info(self, sTrCode, sFieldName, sFieldInfo, bMarketClosed=False) -> int:
+    def _Callback_Info(self, sTrCode, sFieldName, sFieldInfo, bMarketClosed=False):
         self.kiwoom.mlist_output = output_list[sTrCode]
         self.kiwoom.SetInputValue(sFieldName, sFieldInfo)
         nRet = self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101')
         if nRet != 0:
-            self.log.CRITICAL("Failed to CommRqData", sFieldInfo, sTrCode)
-            return {}
+            self.log.CRITICAL("Failed to Request Data From Api", sFieldInfo, sTrCode)
+            return []
 
         if sFieldName == "종목코드":
             self._Update_SM(sFieldInfo, sTrCode, bMarketClosed)
@@ -87,8 +91,8 @@ class KiwoomMain:
     def _Update_SM(self, sStockID: str, sTrCode: str, bIsMarketClosed: bool=False) -> bool:
         try:
             n_StockID = int(sStockID)
-        except Exception as e:
-            self.log.ERROR("Cannot Update SharedMem", e)
+        except ValueError as ve:
+            self.log.ERROR("Cannot Update SharedMem", ve)
             return False
 
         obj_StockInstance = self.cls_SM.get_instance(n_StockID)
@@ -97,18 +101,70 @@ class KiwoomMain:
             return False
 
         if bIsMarketClosed:
-            obj_StockInstance.stock_volume_q    = int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
+            obj_StockInstance.stock_volume_q    = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
             obj_StockInstance.price_data_before = {
-                "start":    int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['시가'].replace('+','').replace('-', '')),              # 시가, 하루에 한번
-                "end":      int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가'].replace('+','').replace('-', '')),              # 종가, 하루에 한번
-                "highest":  int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['고가'].replace('+','').replace('-', '')),            # 고가, 하루에 한번
-                "lowest":   int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['저가'].replace('+','').replace('-', ''))              # 저가, 하루에 한번
+                "start":    utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['시가']),              # 시가, 하루에 한번
+                "end":      utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가']),              # 종가, 하루에 한번
+                "highest":  utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['고가']),            # 고가, 하루에 한번
+                "lowest":   utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['저가']),              # 저가, 하루에 한번
+                "date":     utils.getIntLT(utils.getTodayYmdLT()),
             }
         else: 
             #-----------여기서 업데이트------------
             obj_StockInstance.name              = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['종목명']       # 종목이름
-            obj_StockInstance.price             = int(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가'].replace('+','').replace('-', ''))       # 현재가
+            obj_StockInstance.price             = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가'])       # 현재가
             obj_StockInstance.updated_time      = str(datetime.now())
+
+        return True
+
+    #14영업일 이전부터 현재까지의 기록을 수정주가로 받아온다.
+    def Get_Init_Info(self, sStockID):
+        return self._Callback_Init_Info('OPT10081', sStockID)
+
+
+    def _Callback_Init_Info(self, sTrCode, sStockID) -> int:
+        self.log.DEBUG(utils.getTodayYmdLT())
+        self.kiwoom.mlist_output = output_list[sTrCode]
+        self.kiwoom.SetInputValue("종목코드", sStockID)
+        self.kiwoom.SetInputValue("기준일자", utils.getTodayYmdLT())
+        self.kiwoom.SetInputValue("수정주가구분", "1")
+        nRet = self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101')
+        if nRet != 0:
+            self.log.CRITICAL("Failed to Request Init Data", sStockID, sTrCode)
+            return []
+
+        return self._Init_SM(sStockID, sTrCode)
+
+
+    def _Init_SM(self, sStockID: str, sTrCode: str) -> bool:
+        try:
+            n_StockID = int(sStockID)
+        except ValueError as ve:
+            self.log.ERROR("Cannot Update SharedMem", ve)
+            return False
+
+        if len(self.kiwoom.mdict_rq_data[sTrCode]['Data']) < const.INIT_DATA_AMOUNT:
+            self.log.CRITICAL("Fail to initialize", sStockID)
+            return False
+
+        obj_StockInstance = self.cls_SM.get_instance(n_StockID)
+        if obj_StockInstance is None:
+            self.log.CRITICAL(sStockID, "Stock Does Not Exists")
+            return False
+
+        lst_init_data = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0:14][::-1] #14일치 정보만 가져온다
+        self.log.INFO("reversed", lst_init_data)
+
+        #가져온 14일치 정보로 초기화 해줌
+        for dct_DayInfo in lst_init_data:
+            obj_StockInstance.stock_volume_q = utils.getIntLT(dct_DayInfo['거래량'])
+            obj_StockInstance.price_data_before = {
+            "start":    utils.getIntLT(dct_DayInfo['시가']),
+            "end":      utils.getIntLT(dct_DayInfo['현재가']),
+            "highest":  utils.getIntLT(dct_DayInfo['고가']),     
+            "lowest":   utils.getIntLT(dct_DayInfo['저가']),
+            "date":     utils.getIntLT(dct_DayInfo['일자'])
+            }
 
         return True
 

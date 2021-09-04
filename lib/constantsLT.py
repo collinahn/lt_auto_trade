@@ -51,17 +51,20 @@ STOCK_VALUE_QUEUE_SIZE = 20
 
 STOCK_COMMON_SIZE = 64
 
-SM_UPDATE_PERIOD = 30
+SM_UPDATE_PERIOD = 60
 
 SECONDS_DAY = 86400
 
 LONG_SLEEP_TIME = 100
 
+#첫 번째 플래그
 UPDATE_INFO = -1
+INITIALIZE_INFO = -2
 
+#두 번째 플래그
 UPDATE_BEFORE_CLOSED = -1
-
 UPDAE_AFTER_CLOSED = -2
+RESERVED = 0
 
 #--------SharedMemory--------
 
@@ -82,3 +85,8 @@ API_CALL_LIMIT_PER_SEC = 4 #5
 ONE_SEC = 1
 
 #-----------Trade------------
+
+
+#-------------API------------
+
+INIT_DATA_AMOUNT = 14 #14일
