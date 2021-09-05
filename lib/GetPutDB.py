@@ -9,8 +9,10 @@
 
 import sqlite3
 from datetime import datetime
-from sqlite3.dbapi2 import Connection
+from sqlite3.dbapi2 import Connection, Cursor
+from typing import Tuple
 import constantsLT as const
+import utilsLT as utils
 from LoggerLT import Logger
 
 class GetPutDB(object):
@@ -67,7 +69,6 @@ class GetPutDB(object):
         return True
 
     #공유메모리에 존재하는 데이터들을 한 번에 업데이트한다.
-    #2021.08.08 추가, 아직 테스트 못함
     def update_properties(self) -> bool:
         con: Connection = None
         list_Info4Execute: list = self.__shared_mem.get_property_info4sql()
@@ -147,16 +148,79 @@ class GetPutDB(object):
             return self.exception_handling(e, con)
         return True
 
-    #일봉 데이터(시가, 종가, 최고가, 최저가), 거래량 개별로 db에 저장한다. update 2021.08.15 by taeyoung
-    def add_candle_hist(self, nStockID: int, nStockVolume: int, dictDataSet: dict) -> bool:
+    #auto increment 설정되어있는 필드를 초기화
+    def init_table_autoincrement(self, con: Connection, curs: Cursor, sTableName: str, nStockID: int):
+        query_CheckExists = f"""SELECT EXISTS(SELECT * FROM {sTableName} WHERE rowNo=1)"""
+        curs.execute(query_CheckExists)
+        ret, = curs.fetchone()
+        self.log.INFO(ret)
+
+        if ret == 0:
+            query_InitTable = f"""INSERT INTO {sTableName} Values(1, ?, 0, 0, 0, 0, 0, 0)"""
+            curs.execute(query_InitTable, (nStockID ,))
+            self.log.INFO("Table initiated")
+
+        con.commit()
+
+
+    #종목 추가될 때 테이블을 하나 생성하고 업데이트 내역을 기록한다.
+    def create_hist_table(self, nStockID: int):
         con: Connection = None
-        s_NowTime: str = str(datetime.now().strftime("%x"))  # 08/15/21
+        s_StockID = utils.getStringTick(nStockID)
+        s_TableName = 'tHist' + s_StockID + 'PriceInfo'
 
         try:
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
             curs = con.cursor()
-            query = """INSERT INTO tHistoryCandle Values(?, ?, ?, ?, ?, ?, ?);"""
+            query = f"""CREATE TABLE IF NOT EXISTS {s_TableName} (
+                       stockID INTEGER,
+                       startPrice INTEGER NOT NULL,
+                       endPrice INTEGER NOT NULL,
+                       highestPrice INTEGER NOT NULL,
+                       lowestPrice INTEGER NOT NULL,
+                       stockVolume INTEGER NOT NULL,
+                       dateFrom INTEGER PRIMARY KEY NOT NULL
+                       )"""
+            curs.execute(query)
+
+            con.commit()
+            con.close()
+        except Exception as e:
+            return self.exception_handling(e, con)
+        return True
+
+
+    #이미 저장된 값인지 확인
+    def check_if_exists(self, con: Connection, curs: Cursor, sTableName: str, nDate: int) -> bool:
+        query_CheckExists = f"""SELECT EXISTS(SELECT * FROM {sTableName} WHERE dateFrom={nDate})"""
+        curs.execute(query_CheckExists)
+        ret, = curs.fetchone()
+
+        self.log.DEBUG("checking exists:", ret != 0)
+
+        return ret != 0
+
+
+
+    #일봉 데이터(시가, 종가, 최고가, 최저가), 거래량 개별로 db에 저장한다. update 2021.08.15 by taeyoung
+    def add_candle_hist(self, nStockID: int, nStockVolume: int, dictDataSet: dict) -> bool:
+        con: Connection = None
+        # s_NowTime: str = str(datetime.now().strftime("%x"))  # 08/15/21
+
+        s_StockID = utils.getStringTick(nStockID)
+        s_TableName = 'tHist' + s_StockID + 'PriceInfo'
+
+        try:
+            con = sqlite3.connect(self.__db_path)
+            con.row_factory = sqlite3.Row
+            curs = con.cursor()
+
+            if self.check_if_exists(con, curs, s_TableName, dictDataSet["date"]):
+                con.close
+                return True
+
+            query = f"""INSERT INTO {s_TableName} Values(?, ?, ?, ?, ?, ?, ?);"""
             curs.execute(query, 
                         (nStockID, 
                         dictDataSet["start"], 
@@ -164,7 +228,7 @@ class GetPutDB(object):
                         dictDataSet["highest"],
                         dictDataSet["lowest"], 
                         nStockVolume,
-                        s_NowTime))
+                        dictDataSet["date"]))
 
             con.commit()
             con.close()
@@ -173,6 +237,7 @@ class GetPutDB(object):
         return True
 
     #일봉 데이터(시가, 종가, 최고가, 최저가), 거래량 한 번에 공유메모리를 참조하여 db에 저장한다. update 2021.08.15 by taeyoung
+    #deprecated
     def add_candle_hist_all(self) -> bool:
         con: Connection = None
         list_Info4Execute: list = self.__shared_mem.get_candle_info4sql()
@@ -212,7 +277,7 @@ class GetPutDB(object):
         return True
 
     # 거래내역 얻어오기
-    def get_history_by_id(self, nStockID: int, nNumberFetch: int):
+    def get_history_by_id(self, nStockID: int, nNumberFetch: int=10):
         con: Connection = None
 
         try:

@@ -210,9 +210,6 @@ class Stock(object):
         except ZeroDivisionError as ze:
             self.log.ERROR("Negative RMF sum 0", ze)
             return -1
-        except Exception as e:
-            self.log.ERROR(e)
-            return -100
 
     @name.setter
     def name(self, sName: str) -> None:
@@ -258,7 +255,7 @@ class Stock(object):
     @volume_rt.setter
     def volume_rt(self, nVolumeRT: int) -> None:
         self.__in_StockVolumeRealTime = nVolumeRT
-        self.log.INFO("Stock ID:", self.__in_Ticker, "VolumeRT updated:", nVolumeRT)
+        # self.log.DEBUG("Stock ID:", self.__in_Ticker, "VolumeRT updated:", nVolumeRT)
 
     #하루 단위 거래량을 큐에 저장한다.
     @stock_volume.setter
@@ -269,7 +266,7 @@ class Stock(object):
         self.__iq_TotalTradeVolume.pushQueue(nTradeVolume)
         self.__iq_TotalTradeVolume.pullQueue()  #10일간의 데이터를 저장해두기 위해서 테일포인트를 옮기는 순간 헤드포인트도 옮긴다
         
-        self.log.INFO("Stock ID:", self.__in_Ticker, "Total Stock Volume Updated and Enqueued:", nTradeVolume)
+        # self.log.DEBUG("Stock ID:", self.__in_Ticker, "Total Stock Volume Updated and Enqueued:", nTradeVolume)
 
     #api가 주는 데이터로 업데이트를 마치고 꼭 호출 필요
     #SharedMem.py에서 구현한다.

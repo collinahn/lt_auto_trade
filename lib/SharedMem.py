@@ -69,6 +69,7 @@ class SharedMem(object):
         self.request_initial_info(nKey)
 
         self.cls_DB.add_property_column(nKey)
+        self.cls_DB.create_hist_table(nKey)
         self.cls_DB.update_stock_tracking_info(nKey)
 
     def delete(self, nKey: int) -> None:

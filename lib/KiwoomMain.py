@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import QApplication, qApp
 from TR_Code import output_list
 import utilsLT as utils
 import constantsLT as const
+from GetPutDB import GetPutDB
 
 class KiwoomMain:
     def __new__(cls):
@@ -48,6 +49,7 @@ class KiwoomMain:
             self.kiwoom = KiwoomAPI()
             self.kiwoom.login()
             self.cls_SM = SharedMem()
+            self.cls_DB = GetPutDB(self.cls_SM)
 
             self.log.INFO("KiwoomMain init")
 
@@ -109,6 +111,10 @@ class KiwoomMain:
                 "lowest":   utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['저가']),              # 저가, 하루에 한번
                 "date":     utils.getIntLT(utils.getTodayYmdLT()),
             }
+
+            self.cls_DB.add_candle_hist(n_StockID, \
+                                        obj_StockInstance.stock_volume, 
+                                        obj_StockInstance.price_data_before)
         else: 
             #-----------여기서 업데이트------------
             obj_StockInstance.name              = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['종목명']       # 종목이름
@@ -166,6 +172,12 @@ class KiwoomMain:
             "lowest":   utils.getIntLT(dct_DayInfo['저가']),
             "date":     utils.getIntLT(dct_DayInfo['일자'])
             }
+        
+            self.cls_DB.add_candle_hist(n_StockID, \
+                                        obj_StockInstance.stock_volume, 
+                                        obj_StockInstance.price_data_before)
+
+        self.log.INFO("Updated", len(lst_init_data), "Days of Data")
 
         return True
 

@@ -117,6 +117,13 @@ def getIntLT(sData: str, sDebugData=None):
         Logger.CRITICAL("Cannot Convert Data to Int", sData, sDebugData, ve)
         return -1
 
+def getStringTick(nStockID: int):
+    if nStockID < 0 or nStockID > 999999:
+        Logger.CRITICAL("Wrong StockID", nStockID)
+        return '000000'
+
+    return str(nStockID).zfill(6)
+
 def getTodayYmdLT():
     return datetime.now().strftime("%Y%m%d")
 

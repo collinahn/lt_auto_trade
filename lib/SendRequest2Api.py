@@ -4,6 +4,7 @@
 # 2021.08.24. created by taeyoung
 
 
+from os import umask
 import sys
 import time
 from LoggerLT import Logger
@@ -11,9 +12,10 @@ from SharedMem import SharedMem
 from utilsLT import QueueLT
 from datetime import datetime
 from KiwoomMain import KiwoomMain
-import constantsLT as const
 from threading import Thread
 from PyQt5.QtWidgets import QApplication
+import utilsLT as utils
+import constantsLT as const
 
 
 
@@ -53,7 +55,7 @@ class SendRequest2Api:
 
         #필요한 정보 입력
         n_StockID = dict_Target["StockID"]
-        s_StockID = str(n_StockID).zfill(6) #6자리로 고정
+        s_StockID =  utils.getStringTick(n_StockID) #6자리로 고정
         s_AccountNo = self.lst_usr_info[-1] if "," not in self.lst_usr_info[-1] else self.lst_usr_info[:8]
         # self.log.DEBUG(self.lst_usr_info)
         # self.log.DEBUG("nStockID:", n_StockID, "sStockID:", s_StockID, "account:", s_AccountNo)
