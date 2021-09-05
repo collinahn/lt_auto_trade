@@ -174,7 +174,7 @@ class SharedMem(object):
     def update_trade_volume(self):
         for obj_Target in self.__mdict_MstObject.values():
             # updatedVolume = WrapperClass.WrapperMethod()
-            # obj_Target.stock_volume_q = updatedVolume
+            # obj_Target.stock_volume = updatedVolume
             pass 
         self.log.INFO("Shared Memory Updated: Total Trade Volume(should be presented once a day)")
 
@@ -262,21 +262,21 @@ if __name__ == "__main__":
     samsung.quantity = -3
     samsung.updated_time = str(datetime.now())
     samsung.logic_option ="LarryWilliams"
-    samsung.stock_volume_q = 100_000_000_000
+    samsung.stock_volume = 100_000_000_000
     
     lg = sm.get_instance(100111)
     lg.name = "LG"
     lg.quantity = 50
     lg.updated_time = str(datetime.now())
     lg.logic_option ="LarryWilliams"
-    lg.stock_volume_q = 50_000_000_000
+    lg.stock_volume = 50_000_000_000
 
     hyundai = sm.get_instance(101111)
     hyundai.name = "Hyundai"
     hyundai.quantity = 100
     hyundai.updated_time = str(datetime.now())
     hyundai.logic_option ="LarryWilliams"
-    hyundai.stock_volume_q = 23_000_000_000
+    hyundai.stock_volume = 23_000_000_000
 
     print("do i have Stock 111111? >>", sm.check_possess(111111))
     print("how many do i have? >>", sm.get_current_possess())

@@ -50,8 +50,10 @@ class Stock(object):
             self.__is_StockName = ""
             self.__in_StockCurrentPrice = 0
             self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE, str(self.__in_Ticker)+"StockValue") #주가 저장
+            self.__in_StockVolumeRealTime = 0
             self.__in_StockPriceBought = 0
-            self.__in_StockQuantity = 0
+            self.__in_StockPossessedQuantity = 0
+            self.__in_DayTradeVolume = 0
             self.__iq_TotalTradeVolume = QueueLT(const.STOCK_COMMON_SIZE, str(self.__in_Ticker)+"TradeVolume")
             self.__is_LastUpdated = ""
             self.__is_LastAdded = str(datetime.now())
@@ -98,7 +100,7 @@ class Stock(object):
 
     @property
     def quantity(self) -> int:
-        return self.__in_StockQuantity
+        return self.__in_StockPossessedQuantity
 
     @property
     def price(self) -> int:
@@ -108,17 +110,19 @@ class Stock(object):
     def price_q(self) -> QueueLT:
         return self.__iq_StockValues
 
-    #하루 단위 거래량 큐의 시작 인덱스와 큐에 해당하는 리스트를 튜플로 반환
+    #실시간 거래량
     @property
-    def stock_volume_q(self) -> tuple: 
-        if self.__iq_TotalTradeVolume.getTailPoint() == 0:
-            return const.STOCK_TRADING_VOLUME_QUEUE_SIZE - 1, self.__iq_TotalTradeVolume.getQueue()
-        return self.__iq_TotalTradeVolume.getTailPoint() - 1, self.__iq_TotalTradeVolume.getQueue()
+    def volume_rt(self) -> int:
+        return self.__in_StockVolumeRealTime
     
     #당일의 거래량 반환
     @property
-    def stock_volume_n(self) -> int:
-        return self.stock_volume_q[1][self.stock_volume_q[0]]
+    def stock_volume(self) -> int:
+        return self.__in_DayTradeVolume
+
+    @property
+    def stock_volume_q(self) -> QueueLT: 
+        return self.__iq_TotalTradeVolume
 
     @property
     def updated_time(self) -> str:
@@ -158,7 +162,7 @@ class Stock(object):
         return self.__id_PriceDataBefore
 
     @property
-    def price_data_queue(self) -> QueueLT:
+    def price_data_q(self) -> QueueLT:
         return self.__iq_PriceDataQueue
 
     #평균가격
@@ -222,12 +226,12 @@ class Stock(object):
     @quantity.setter
     def quantity(self, nUpdatedQuantity: int) -> None:
         try:
-            if self.__in_StockQuantity + nUpdatedQuantity < 0:
+            if self.__in_StockPossessedQuantity + nUpdatedQuantity < 0:
                 raise(ValueError)
 
-            self.__in_StockQuantity += nUpdatedQuantity
+            self.__in_StockPossessedQuantity += nUpdatedQuantity
             self.log.INFO("Stock ID:", self.__in_Ticker, ",", \
-                          "Updated Quanity:", self.__in_StockQuantity)
+                          "Updated Quanity:", self.__in_StockPossessedQuantity)
         except ValueError as ve:
             self.log.ERROR("ValueError:", ve)
 
@@ -251,9 +255,17 @@ class Stock(object):
         except TypeError as te:
             self.log.ERROR("TypeError:", te)
 
+    @volume_rt.setter
+    def volume_rt(self, nVolumeRT: int) -> None:
+        self.__in_StockVolumeRealTime = nVolumeRT
+        self.log.INFO("Stock ID:", self.__in_Ticker, "VolumeRT updated:", nVolumeRT)
+
     #하루 단위 거래량을 큐에 저장한다.
-    @stock_volume_q.setter
-    def stock_volume_q(self, nTradeVolume: int) -> None:
+    @stock_volume.setter
+    def stock_volume(self, nTradeVolume: int) -> None:
+
+        self.__in_DayTradeVolume = nTradeVolume
+
         self.__iq_TotalTradeVolume.pushQueue(nTradeVolume)
         self.__iq_TotalTradeVolume.pullQueue()  #10일간의 데이터를 저장해두기 위해서 테일포인트를 옮기는 순간 헤드포인트도 옮긴다
         
@@ -298,8 +310,8 @@ class Stock(object):
         self.__iq_PriceDataQueue.pushQueue(dict_Price)
         self.__iq_PriceDataQueue.pullQueue()  
 
-    # @price_data_queue.setter
-    # def price_data_queue(self, dict_Price: dict):
+    # @price_data_q.setter
+    # def price_data_q(self, dict_Price: dict):
     #     self.__iq_PriceDataList.pushQueue(dict_Price)
     #     self.__iq_PriceDataList.pullQueue()        #데이터를 pull하는 곳이 없음
 

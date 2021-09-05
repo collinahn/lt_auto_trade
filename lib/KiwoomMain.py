@@ -101,7 +101,7 @@ class KiwoomMain:
             return False
 
         if bIsMarketClosed:
-            obj_StockInstance.stock_volume_q    = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
+            obj_StockInstance.stock_volume    = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
             obj_StockInstance.price_data_before = {
                 "start":    utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['시가']),              # 시가, 하루에 한번
                 "end":      utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가']),              # 종가, 하루에 한번
@@ -113,6 +113,7 @@ class KiwoomMain:
             #-----------여기서 업데이트------------
             obj_StockInstance.name              = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['종목명']       # 종목이름
             obj_StockInstance.price             = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가'])       # 현재가
+            obj_StockInstance.volume_rt         = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])
             obj_StockInstance.updated_time      = str(datetime.now())
 
         return True
@@ -152,12 +153,12 @@ class KiwoomMain:
             self.log.CRITICAL(sStockID, "Stock Does Not Exists")
             return False
 
-        lst_init_data = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0:14][::-1] #14일치 정보만 가져온다
+        lst_init_data = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0:const.STOCK_COMMON_SIZE][::-1] #14일치 정보만 가져온다
         self.log.INFO("reversed", lst_init_data)
 
         #가져온 14일치 정보로 초기화 해줌
         for dct_DayInfo in lst_init_data:
-            obj_StockInstance.stock_volume_q = utils.getIntLT(dct_DayInfo['거래량'])
+            obj_StockInstance.stock_volume = utils.getIntLT(dct_DayInfo['거래량'])
             obj_StockInstance.price_data_before = {
             "start":    utils.getIntLT(dct_DayInfo['시가']),
             "end":      utils.getIntLT(dct_DayInfo['현재가']),

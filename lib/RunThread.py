@@ -56,6 +56,8 @@ class RunThread(object):
             self.log.INFO("RunThread init")
 
     #콘솔 창에 종목코드(int)입력하면 디버깅 정보를 출력하게해주는 스레드
+    #단순 엔터: 보유종목 출력
+    #종목코드 입력: 디버깅정보 조회 후 출력
     def _debug(self):
         while True:
             s_input = input()
@@ -78,15 +80,16 @@ class RunThread(object):
 f'==============DEBUG_INFO {obj.ticker}====================\n \
 \n \
 \n \
-name: {obj.name} \n \
+name:  {obj.name} \n \
 price: {obj.price} \n \
-volume: {obj.stock_volume_n} \n \
+volume_realtime: {obj.volume_rt} \n \
 logic_option: {obj.logic_option} \n \
 day info: {obj.price_data_before} \n \
 \n \
+volume: {obj.stock_volume} \n \
 price queue: {obj.price_q.getList()}\n \
-volume queue: {obj.stock_volume_q}\n \
-dayinfo queue: {obj.price_data_queue.getList()}\n \
+volume queue: {obj.stock_volume_q.getList()}\n \
+dayinfo queue: {obj.price_data_q.getList()}\n \
 \n \
 \n \
 pricebought: {obj.price_bought} \n \

@@ -41,7 +41,7 @@ class KiwoomAPI(QAxWidget):
             self.set_kiwoom_api() 
             self.set_event_slot()
             self.mdict_rq_data = {}
-            self.dynamicmlist_output = []
+            self.mlist_output = []
             self.mlist_chejan_data = {}
             self.dict_not_signed_account = {}
 
