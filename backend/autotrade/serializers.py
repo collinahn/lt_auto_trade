@@ -12,12 +12,12 @@ class PostSerializer(serializers.ModelSerializer):
             'mstr_sale_strategy'
         ]
 
-# class UserInfoSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         fields = [
-#             'Log_in_state',
-#             'Name',
-#             'ID',
-#             'n_account',
-#             'account_ID',
-#         ]
+class UserInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = [
+            'Log_in_state',
+            'Name',
+            'ID',
+            'n_account',
+            'account_ID',
+        ]

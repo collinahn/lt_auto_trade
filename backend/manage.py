@@ -2,10 +2,12 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-
+from lib.RunThread import RunThread
+from threading import Thread
 
 def main():
     """Run administrative tasks."""
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ltautotrade.settings')
     try:
         from django.core.management import execute_from_command_line
@@ -19,4 +21,8 @@ def main():
 
 
 if __name__ == '__main__':
+    # rt = RunThread()
+    # rt.run_system()
+
     main()
+    
