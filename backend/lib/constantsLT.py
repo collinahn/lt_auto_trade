@@ -84,6 +84,8 @@ API_CALL_LIMIT_PER_SEC = 4 #5
 
 ONE_SEC = 1
 
+ONE_HOUR = 3600
+
 #-----------Trade------------
 
 

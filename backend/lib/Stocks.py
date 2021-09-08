@@ -175,12 +175,11 @@ class Stock(object):
     #tp가 양이면 true, 아니면 false를 덧붙여 반환한다.
     def _rmf(self, nthDate: int):
         # 최근 순으로 14개를 계산할 거임. 이때 두 리스트의 크기는 14보다 커야한다.
-        # 사이즈 커지면 오래걸릴텐데,,, 미리 계산을 끝내놓을 수 없나?
-        lst_priceData = self.__iq_PriceDataQueue.getList().reverse()
-        lst_volume = self.__iq_TotalTradeVolume.getList().reverse()
+        lst_priceData = self.__iq_PriceDataQueue.getTrimmedList().reverse()
+        lst_volume = self.__iq_TotalTradeVolume.getTrimmedList().reverse()
 
         if len(lst_priceData) < const.MFI_STANDARD+1 and len(lst_volume) < const.MFI_STANDARD+1:
-            self.log.CRITICAL("PriceData and TradeVolume Queue Size Error !")
+            self.log.CRITICAL("PriceData and TradeVolume Queue Data Not Enough > Check Initiating After Stock Added !")
             raise ValueError
 
         bRet = False
@@ -189,7 +188,7 @@ class Stock(object):
 
         return self._tp(lst_priceData[nthDate])*lst_volume[nthDate], bRet
 
-    # MFR = 14 일간 양의 RMF/14일간 음의 RMF
+    # MFR = 양의 RMF/14일간 음의 RMF -> 14일간 돌린다
     def mfr(self) -> float:
         pos_rmf = 0
         neg_rmf = 0

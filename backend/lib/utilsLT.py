@@ -91,6 +91,7 @@ class QueueLT:
         return self.__iq_Queue
 
     #사용하기 쉽도록 정렬하여 리스트로 전달한다
+    #큐가 꽉찬 상태인 경우 사용
     def getList(self) -> list:
         if self.__in_TailPointIdx == 0: #비어있거나 한바퀴 돈 것
             return self.__iq_Queue
@@ -99,6 +100,12 @@ class QueueLT:
         back = queue[:self.__in_TailPointIdx]
         front = queue[self.__in_TailPointIdx:]
         return front + back #넣은 순서대로 있는 리스트가 반환
+
+    #None이 아닌 자료만 내보낸다
+    def getTrimmedList(self) -> list:
+        lst_ret = self.getList()
+
+        return [idx for idx in lst_ret if idx is not None]
 
 
     def isEmpty(self) -> bool:

@@ -46,7 +46,7 @@ class TradeLogic:
             
 
     #의사결정 로직1, tested 2021.08.12
-    #반드시 파는 로직과 사는 로직을 한 함수에 전부 기록해야한다.
+    #파는 로직과 사는 로직을 한 함수에 전부 기록한다.
     def Logic1(self, nStockID: int) -> bool:
         #self.iq_SharedMem에서 필요한 데이터를 종합해 살지 말지 결정하고 몇 주 살건지 결정, dict형으로 매수/매도할 때 필요한 정보 전달
 
@@ -83,13 +83,13 @@ class TradeLogic:
         cls_TargetStock = self.cls_SM.get_instance(nStockID)
         n_PriceNow = cls_TargetStock.price
         n_PriceBought = cls_TargetStock.price_bought
-        n_TodayDate = time.strftime("%x", time.localtime(time.time())) # 08/15/21
+        s_TodayDate = time.strftime("%x", time.localtime(time.time())) # 08/15/21
         dict_DayBefore = cls_TargetStock.price_data_before
         
 
         #------------------파는 로직------------------
         #존버조건에 해당하지 않는다면 거래 다음날 시가에 전부 던진다
-        if cls_TargetStock.quantity > 0 and cls_TargetStock.day_bought != n_TodayDate:
+        if cls_TargetStock.quantity > 0 and cls_TargetStock.day_bought != s_TodayDate:
             if cls_TargetStock.johnber == True and n_PriceBought > n_PriceNow:
                 self.log.INFO("Johnber Executed", "price bought:", cls_TargetStock.price_bought, "price now:", cls_TargetStock.price)
             else:
@@ -110,7 +110,7 @@ class TradeLogic:
         #전날 양봉이고 전날 최고가와 최저가 평균을 넘을 때 산다
         if dict_DayBefore["start"] < dict_DayBefore["end"] \
             and dict_DayBefore["highest"] + dict_DayBefore["lowest"] < n_PriceNow \
-            and cls_TargetStock.day_bought != n_TodayDate:
+            and cls_TargetStock.day_bought != s_TodayDate:
             # 거래일이 오늘이면 더 사지 않는다.
 
             dict_BuyRequest = { 
@@ -124,7 +124,7 @@ class TradeLogic:
             self.log.INFO("Buy Request Pushed", dict_BuyRequest)
             #거래 일자 갱신 2021년 7월20일 -> 07/20/21
             #큐는 들어갔어도 거래가 실패할 수도 있는데 미리 초기화를 해 주는 이유는 거래가 안되었으면 어짜피 파는 조건문은 실행 안될 것이기 때문
-            cls_TargetStock.day_bought = n_TodayDate
+            cls_TargetStock.day_bought = s_TodayDate
         #------------------사는 로직 끝------------------
 
         return True
@@ -172,7 +172,7 @@ class TradeLogic:
         #1. 주식시장이 끝나면 당일거래상위 증100제외 거래량 상위1~40위에서 장대양봉 뽑음 (조건식을 이용해야할 것 같음.)
         #2. 현재가가 전날 종가보다 낮은 가격O 
         if dict_DayBefore["start"] < dict_DayBefore["end"] \
-        and dict_DayBefore["end"] > n_PriceNow:
+            and dict_DayBefore["end"] > n_PriceNow:
         #전날 거래량 대비 거래량이 60%이상 감소
         #당일 3분봉 차트에서 20이동평균선을 관찰 (어떻게 구현할지 막힘...)
            
@@ -242,7 +242,6 @@ class TradeLogic:
         # MFI 공식 이용 
         # 기본 로직 - MACD 오실레이터 (3일 지수이동평균, 7일 지수이동평균)사용함
 
-#------------------여기에 각자 거래 로직 구현하세요------------------
 
 
     #스레드에서 호출되는 함수(전체 로직이 호출되어야 함)
@@ -263,7 +262,7 @@ class TradeLogic:
                 #MFI 옵션 매수는 1시간에 1번만 실행
                 elif value.logic_option == 'MFI':
                     t_Now = datetime.now().timestamp()
-                    if t_Now - t_LastExecMFI > 3600:
+                    if t_Now - t_LastExecMFI > const.ONE_HOUR:
                         self.Money_Flow_Index_Buy(key)
 
                     t_LastExecMFI = datetime.now().timestamp()
