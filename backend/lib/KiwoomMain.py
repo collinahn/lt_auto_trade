@@ -21,13 +21,12 @@
 
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
 
-import concurrent
 import sys
 from datetime import datetime
 from .LoggerLT import Logger
 from .KiwoomAPI import KiwoomAPI
 from .SharedMem import SharedMem
-from PyQt5.QtWidgets import QApplication, qApp
+from PyQt5.QtWidgets import QApplication
 from .TR_Code import output_list
 from . import utilsLT as utils
 from . import constantsLT as const
@@ -41,7 +40,7 @@ class KiwoomMain:
         cls.log.INFO(cls._instance)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, *args):
         cls = type(self)
         if not hasattr(cls, "_init"):
             cls._init = True
@@ -103,6 +102,7 @@ class KiwoomMain:
             return False
 
         if bIsMarketClosed:
+            # 하루에 한 번 업데이트
             obj_StockInstance.stock_volume    = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])        # 하루에 한번 전체 거래량을 업데이트하라는 요청이 있으면
             obj_StockInstance.price_data_before = {
                 "start":    utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['시가']),              # 시가, 하루에 한번
@@ -112,13 +112,14 @@ class KiwoomMain:
                 "date":     utils.getIntLT(utils.getTodayYmdLT()),
             }
 
-            self.cls_DB.add_candle_hist(n_StockID, \
-                                        obj_StockInstance.stock_volume, 
-                                        obj_StockInstance.price_data_before)
-            self.log.INFO("Updated AfterClose Data")
+            #이미 저장되어있어 db저장 안될경우 False 반환
+            if self.cls_DB.add_candle_hist( n_StockID, \
+                                            obj_StockInstance.stock_volume, 
+                                            obj_StockInstance.price_data_before ) == True:
+                self.log.INFO("Updated AfterClose Data")
 
         else: 
-            #-----------여기서 업데이트------------
+            # 상시 업데이트
             obj_StockInstance.name              = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['종목명']       # 종목이름
             obj_StockInstance.price             = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['현재가'])       # 현재가
             obj_StockInstance.volume_rt         = utils.getIntLT(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0]['거래량'])
@@ -275,10 +276,21 @@ class KiwoomMain:
         self.log.INFO("미체결정보: ", self.kiwoom.dict_not_signed_account)
         return self.kiwoom.dict_not_signed_account
 #----------#
+
+    def _Update_Quantity(self, sStockID: str, nQuantity: int) -> None:
+        nStockID = utils.getIntLT(sStockID)
+        obj_Instance = self.cls_SM.get_instance(nStockID)
+        obj_Instance.quantity = nQuantity
+
     # 시장가 매수 (확인) 8.12 수정 // 8.17 수정완료
     def Stock_Buy_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
-        self.kiwoom.SendOrder("시장가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, 0, "03", "")
+        nRet = self.kiwoom.SendOrder("시장가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, 0, "03", "")
         self.log.INFO("시장가매수: ", self.kiwoom.mlist_chejan_data)
+
+        # 매수가 성공하면 보유수량 업데이트 
+        if nRet == 0:
+            self._Update_Quantity(istr_stock_code, in_quantity)
+
         return self.kiwoom.mlist_chejan_data
 
     # 지정가 매수 8.18 완료 
@@ -290,7 +302,11 @@ class KiwoomMain:
 
     # 시장가 매도 8.12 시작 // 8.18 수정 완료 
     def Stock_Sell_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
-        self.kiwoom.SendOrder("시장가매도", "0101", istr_account_number, 2, istr_stock_code, in_quantity, 0, "03", "")
+        nRet = self.kiwoom.SendOrder("시장가매도", "0101", istr_account_number, 2, istr_stock_code, in_quantity, 0, "03", "")
+
+        # 매도가 성공하면 보유수량 업데이트 
+        if nRet == 0:
+            self._Update_Quantity(istr_stock_code, -(in_quantity))
 
     # 지정가 매도 8.18 완료 
     def Stock_Sell_Certainprice(self, istr_stock_code, istr_account_number, in_quantity, in_price):

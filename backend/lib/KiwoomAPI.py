@@ -19,14 +19,14 @@ from PyQt5.QtCore import QEventLoop
 from .LoggerLT import Logger
 
 class KiwoomAPI(QAxWidget):
-    def __new__(cls):
+    def __new__(cls, *args):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
             cls.log = Logger()
         cls.log.INFO(cls._instance)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, *args):
         cls = type(self)
         if not hasattr(cls, "_init"):
             cls._init = True
@@ -34,6 +34,7 @@ class KiwoomAPI(QAxWidget):
             self.login_event_loop = QEventLoop() #로그인 관련 이벤트 루프
             self.event_loop_CommRqData = QEventLoop()
             self.event_loop_SendOrder = QEventLoop()
+
             
             # 초기 작업 
             self.set_kiwoom_api() 
@@ -255,8 +256,10 @@ class KiwoomAPI(QAxWidget):
     
     # 주식 주문을 서버로 전송, 에러코드 반환
     def SendOrder(self, sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo):
-        self.dynamicCall('SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)', [sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo])
+        nRet = self.dynamicCall('SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)', [sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo])
         self.event_loop_SendOrder.exec_()
+
+        return nRet
 
 
         
