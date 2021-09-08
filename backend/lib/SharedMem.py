@@ -62,10 +62,10 @@ class SharedMem(object):
             return None
 
     #key 값 = 종목코드
-    def add(self, nKey: int) -> None:
-        self.__mdict_MstObject[nKey] = Stock(nKey)
+    def add(self, nKey: int, sLogicOption: str='') -> None:
+        self.__mdict_MstObject[nKey] = Stock(nKey, sLogicOption)
 
-        self.log.INFO("New Stock Instance:", nKey)
+        self.log.INFO("New Stock Instance:", nKey, sLogicOption)
         self.request_initial_info(nKey)
 
         self.cls_DB.add_property_column(nKey)

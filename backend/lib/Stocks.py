@@ -40,13 +40,14 @@ class Stock(object):
         return cls._instance
 
     #인스턴스 변수 초기화
-    def __init__(self, *args):
-        # if {args[0]}.issubset(Stock.__mset_Stocks) == False:
-        if args[0] not in Stock.__mset_Stocks:
-            self.__in_Ticker = args[0]
-            self.__is_LogicOption = "" #args[1]
-            self.__is_TradeOption = ""
-            #나중에 완성된 키움 api wrapper 클래스로 여기서 초기화
+    #첫 번째 인자는 종목코드, 두 번째 인자는 알고리즘옵션, 세 번째 인자는 매매옵션(구현안됨) 2021.09.08
+    def __init__(self, nStockID: int, sLogicOption: str='', sTradeOption: str='', *args):
+        # if {nStockID}.issubset(Stock.__mset_Stocks) == False:
+        if nStockID not in Stock.__mset_Stocks:
+            self.__in_Ticker = nStockID
+            self.__is_LogicOption = sLogicOption
+            self.__is_TradeOption = sTradeOption
+
             self.__is_StockName = ""
             self.__in_StockCurrentPrice = 0
             self.__iq_StockValues = QueueLT(const.STOCK_VALUE_QUEUE_SIZE, str(self.__in_Ticker)+"StockValue") #주가 저장
@@ -72,9 +73,9 @@ class Stock(object):
             self.__iq_PriceDataQueue = QueueLT(const.STOCK_COMMON_SIZE, str(self.__in_Ticker)+"PriceData") # n일간의 가격 정보를 저장한다.
 
             Stock.__mn_TotalStock += 1
-            Stock.__mset_Stocks.add(args[0])
+            Stock.__mset_Stocks.add(nStockID)
 
-            self.log.INFO("Stock init:", args[0], self._instance)
+            self.log.INFO("Stock init:", nStockID, self._instance)
     
     def __hash__(self, *args):
         return hash((self.args[0]))
