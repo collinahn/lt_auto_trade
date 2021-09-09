@@ -215,8 +215,14 @@ class Stock(object):
     def name(self, sName: str) -> None:
         self.__is_StockName = sName
 
+    #계산에 필요한 것들을 리스트로 넘겨받는다
+    #lst_Data = [가격, 추가 수량, 과거 보유 수량]
+    # 추가 수량이 0 이하이면 평균 가격은 변하지 않는다.
+    # 매수인 경우 추가수량*추가 가격 + 과거 보유 수량*보유가격 / 총 수량으로 계산
     @price_bought.setter
-    def price_bought(self, nAveragePriceBought: int) -> None:
+    def price_bought(self, lst_Data: tuple) -> None:
+        if lst_Data[1] < 0: return # 매도한 경우 업데이트하지 않는다
+        nAveragePriceBought = lst_Data[0]*lst_Data[1] + lst_Data[2]*self.price_bought
         self.__in_StockPriceBought = nAveragePriceBought
 
     #매수/매도시 현재 보유수량을 업데이트한다.

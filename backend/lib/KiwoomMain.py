@@ -277,10 +277,30 @@ class KiwoomMain:
         return self.kiwoom.dict_not_signed_account
 #----------#
 
+    #매매 체결 이후 공유메모리 및 db업데이트 
+    #신뢰성을 위해 체결잔고내역 콜백데이터를 넣는다
     def _Update_Quantity(self, sStockID: str, nQuantity: int) -> None:
         nStockID = utils.getIntLT(sStockID)
+        sType = "Buy" if nQuantity > 0 else "Sell"
+
+        nUpdatedPrice = utils.getIntLT(self.kiwoom.mlist_chejan_data['체결내용']['주문가격'])
+        nUpdatedQuantity = utils.getIntLT(self.kiwoom.mlist_chejan_data['체결내용']['주문수량'])
+        
+        if nQuantity < 0: nUpdatedQuantity = -nUpdatedQuantity #매도면 매도 처리
+
         obj_Instance = self.cls_SM.get_instance(nStockID)
-        obj_Instance.quantity = nQuantity
+        tup_Average = (nUpdatedPrice, nUpdatedQuantity, obj_Instance.quantity)
+        obj_Instance.price_bought = tup_Average
+        obj_Instance.quantity = nUpdatedQuantity
+
+        self.cls_DB.add_transaction_hist(nStockID, \
+                                         sType, 
+                                         nUpdatedPrice, 
+                                         nUpdatedQuantity, 
+                                         obj_Instance.price_bought, 
+                                         obj_Instance.quantity)
+
+
 
     # 시장가 매수 (확인) 8.12 수정 // 8.17 수정완료
     def Stock_Buy_Marketprice(self, istr_stock_code, istr_account_number, in_quantity):
@@ -297,7 +317,7 @@ class KiwoomMain:
     def Stock_Buy_Certainprice(self, istr_stock_code, istr_account_number, in_quantity, in_price):
         self.kiwoom.SendOrder("지정가매수", "0101", istr_account_number, 1, istr_stock_code, in_quantity, in_price, "00", "")
 
-        self.log.INFO("지정가매도: " , self.kiwoom.mlist_chejan_data)
+        self.log.INFO("지정가매수: " , self.kiwoom.mlist_chejan_data)
         return self.kiwoom.mlist_chejan_data
 
     # 시장가 매도 8.12 시작 // 8.18 수정 완료 

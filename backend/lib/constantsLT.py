@@ -74,9 +74,9 @@ RESERVED = 0
 
 REQUEST_QUEUE_SIZE = 128
 
-LOGIC_OPTION = { "LarryWilliams", "MFI", "ClosingPrice" "CandleTrade" }
+LOGIC_OPTION = { "LarryWilliams", "MFI", } #"ClosingPrice" "CandleTrade" }
 
-TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour" }
+TRADE_OPTION = { "MarketOrder", "PendingOrder", "OffHour", "", }
 
 MFI_STANDARD = 14 # 14일
 

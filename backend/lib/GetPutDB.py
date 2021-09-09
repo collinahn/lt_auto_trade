@@ -163,7 +163,7 @@ class GetPutDB(object):
 
 
     #종목 추가될 때 테이블을 하나 생성하고 업데이트 내역을 기록한다.
-    def create_hist_table(self, nStockID: int):
+    def create_tHist_PriceInfo(self, nStockID: int):
         con: Connection = None
         s_StockID = utils.getStringTick(nStockID)
         s_TableName = 'tHist' + s_StockID + 'PriceInfo'
@@ -190,13 +190,49 @@ class GetPutDB(object):
         return True
 
 
+    #종목 추가될 때 테이블을 하나 생성하고 거래 내역을 기록한다.
+    #stockID : 종목코드
+    #typeTransaction : "Buy"/"Sell"
+    #pricePoint: 가격
+    #quantityAt: 수량
+    #averagePrice: 보유 수량 평균가
+    #totalQuantity: 총 보유 수량
+    #dateAt: 성공시간 (milisec 단위)
+    def create_tHist_Transaction(self, nStockID: int):
+        con: Connection = None
+        s_StockID = utils.getStringTick(nStockID)
+        s_TableName = 'tHist' + s_StockID + 'Transaction'
+
+        try:
+            con = sqlite3.connect(self.__db_path)
+            con.row_factory = sqlite3.Row
+            curs = con.cursor()
+            query = f"""CREATE TABLE IF NOT EXISTS {s_TableName} (
+                       stockID INTEGER,
+                       typeTransaction TEXT NOT NULL,
+                       pricePoint INTEGER NOT NULL,
+                       quantityAt INTEGER NOT NULL,
+                       averagePrice REAL NOT NULL,
+                       totalQuantity INTEGER NOT NULL,
+                       dateAt TEXT PRIMARY KEY NOT NULL
+                       )"""
+            curs.execute(query)
+
+            con.commit()
+            con.close()
+        except Exception as e:
+            return self.exception_handling(e, con)
+        return True
+
+
     #이미 저장된 값인지 확인
     def check_if_exists(self, con: Connection, curs: Cursor, sTableName: str, nDate: int) -> bool:
         query_CheckExists = f"""SELECT EXISTS(SELECT * FROM {sTableName} WHERE dateFrom={nDate})"""
         curs.execute(query_CheckExists)
         ret, = curs.fetchone()
 
-        self.log.DEBUG("checking exists:", ret != 0)
+        if ret != 0:
+            self.log.INFO(sTableName, "Data Updated", nDate)
 
         return ret != 0
 
@@ -217,7 +253,7 @@ class GetPutDB(object):
 
             if self.check_if_exists(con, curs, s_TableName, dictDataSet["date"]):
                 con.close
-                return True
+                return False
 
             query = f"""INSERT INTO {s_TableName} Values(?, ?, ?, ?, ?, ?, ?);"""
             curs.execute(query, 
@@ -256,18 +292,19 @@ class GetPutDB(object):
         return True
 
     # 거래 정보 업데이트
-    # tStockProperties가 업데이트 될 때 trigger로 기록되도록 하는 것도 나쁘지 않음
     # nQuantity: + 사자 - 팔자
-    def add_transaction_hist(self, nStockID: int, nQuantity: int, nPrice: int) -> bool:
+    def add_transaction_hist(self, nStockID: int, sType: str, nPrice: int, nQuantity: int, nAvgPrice: int, nTotalQuantity: int) -> bool:
         con: Connection = None
-        s_NowTime: str = str(datetime.now())
+        s_StockID = utils.getStringTick(nStockID)
+        s_TableName = 'tHist' + s_StockID + 'Transaction'
+        s_NowTime: str = str(datetime.now()) #2021-09-09 03:08:33,620
 
         try:
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
             curs = con.cursor()
-            query = """INSERT INTO tHistoryTransaction Values(?, ?, ?, ?);"""
-            curs.execute(query, (nStockID, nQuantity, nPrice, s_NowTime))
+            query = f"""INSERT INTO {s_TableName} Values(?, ?, ?, ?, ?, ?, ?);"""
+            curs.execute(query, (nStockID, nPrice, nQuantity, nAvgPrice, nTotalQuantity, s_NowTime))
 
             con.commit()
             con.close()
@@ -278,13 +315,15 @@ class GetPutDB(object):
     # 거래내역 얻어오기
     def get_history_by_id(self, nStockID: int, nNumberFetch: int=10):
         con: Connection = None
+        s_StockID = utils.getStringTick(nStockID)
+        s_TableName = 'tHist' + s_StockID + 'Transaction'
 
         try:
             con = sqlite3.connect(self.__db_path)
             con.row_factory = sqlite3.Row
             curs = con.cursor()
-            query = """SELECT * \
-                FROM `tHist000010Transaction` \
+            query = f"""SELECT * \
+                FROM {s_TableName} \
                 WHERE `stockID`=? \
                 LIMIT ?"""
             curs.execute(query, (nStockID, nNumberFetch))
