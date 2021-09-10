@@ -33,23 +33,27 @@ class SharedMem(object):
     def __init__(self, *args, **kwargs):
         cls = type(self)
         #최초 한 번만 초기화를 진행한다, 인자 없이 호출되는 경우 객체만 반환하고 초기화는 하지 않는다. 초기화는 RunThread.__init__에서
-        if not hasattr(cls, "_init") and not hasattr(cls, "__il_Account_Info") and args:
+        if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
-            self.__it_AccountInfo = args[0]  # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
+            self.__it_AccountInfo = ('None', ) #args[0]  # 최초 SharedMem 인스턴스를 호출할 때 어카운트 정보로 초기화한다.
 
             self.iq_RequestQueue = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")  #TradeLogic에서 의사결정을 하면 매도, 매수 주문을 큐에 등록함
 
             self.cls_DB = GetPutDB(self)
 
-            self.log.INFO("SharedMem init:", self.__it_AccountInfo)
+            self.log.WARNING("SharedMem init")
 
-        if not hasattr(cls, "_init"):
-            self.log.WARNING("SharedMem Init Not Complete !!")
+        if self.__it_AccountInfo[0] == 'None' and args:
+            self.set_usr_info(args[0])
+            self.log.INFO("SharedMem init:", self.__it_AccountInfo)
 
 
     def print_shared_mem(self):
         print(self.__mdict_MstObject)
+
+    def set_usr_info(self, tupInfo: tuple) -> None:
+        self.__it_AccountInfo = tupInfo
 
     #유저 정보(계좌 정보)를 넘겨준다
     #(로그인여부, 이름, 아이디, 계좌 개수, 계좌번호)
