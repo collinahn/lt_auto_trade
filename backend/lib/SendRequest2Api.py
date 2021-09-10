@@ -19,7 +19,7 @@ from . import constantsLT as const
 
 
 
-class SendRequest2Api(object):
+class SendRequest2Api(QThread):
     
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
@@ -37,7 +37,7 @@ class SendRequest2Api(object):
             super().__init__()
 
             # #키움 초기화 및 로그인 처리
-            self.qapp = QApplication(sys.argv)
+            # self.qapp = QApplication(sys.argv)
 
             self.iq_Threads = QueueLT(const.REQUEST_QUEUE_SIZE, "Threads4Request")
 
@@ -96,9 +96,7 @@ class SendRequest2Api(object):
 
     # 이 함수가 RunThread에서 호출된다
     def Send_Request_Throttle(self):
-        #타 스레드에서 호출할 때 com객체 초기화 필요
-        nRet = pythoncom.CoInitialize()
-        self.log.CRITICAL("Coinit:", nRet)
+
         self.cls_KW = KiwoomMain()
         self.lst_usr_info = self.cls_KW.Get_Login_Info()
         self.cls_SM = SharedMem(self.lst_usr_info)
@@ -109,17 +107,17 @@ class SendRequest2Api(object):
         while True:
             #큐가 비어있다면 휴식하거나 스레드 자원 회수
             if q_RequestFmLogic.isEmpty():
-                if not self.iq_Threads.isEmpty(): #and not self.iq_Threads.getHead().is_alive():
+                # if not self.iq_Threads.isEmpty(): #and not self.iq_Threads.getHead().is_alive():
                     # self.iq_Threads.getHead().join(timeout=0.5)
-                    self.iq_Threads.pullQueue()
-                    self.log.INFO("Request Thread joined")
+                #     self.iq_Threads.pullQueue()
+                #     self.log.INFO("Request Thread joined")
 
-                else:
-                    time.sleep(1)
+                # else:
+                time.sleep(1)
 
                 n_ApiCallCnt = 0
                 continue
-        
+
             n_ApiCallCnt += self.Send_Request(q_RequestFmLogic)
 
             #api 요청 횟수가 과도하다면 api를 통한 요청이 씹히므로 충분히 쉰다.
@@ -129,3 +127,7 @@ class SendRequest2Api(object):
                     self.log.WARNING("THROTTLING API CALL !! SLEEPING 1 SEC")
                     time.sleep(1)
                 n_ApiCallCnt = 0
+
+
+    def run(self):
+        self.Send_Request_Throttle()

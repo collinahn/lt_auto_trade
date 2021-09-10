@@ -231,9 +231,6 @@ class GetPutDB(object):
         curs.execute(query_CheckExists)
         ret, = curs.fetchone()
 
-        if ret != 0:
-            self.log.INFO(sTableName, "Data Updated", nDate)
-
         return ret != 0
 
 
@@ -254,6 +251,8 @@ class GetPutDB(object):
             if self.check_if_exists(con, curs, s_TableName, dictDataSet["date"]):
                 con.close
                 return False
+            else:
+                self.log.INFO("Updated", dictDataSet["date"], "Price Data on", s_TableName)
 
             query = f"""INSERT INTO {s_TableName} Values(?, ?, ?, ?, ?, ?, ?);"""
             curs.execute(query, 

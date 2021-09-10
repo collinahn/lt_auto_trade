@@ -12,13 +12,12 @@
 
 ## written by: ChanHyuk Jeon
 
-import sys
-import os
+import pythoncom
 from PyQt5.QAxContainer import QAxWidget
 from PyQt5.QtCore import QEventLoop
 from .LoggerLT import Logger
 
-class KiwoomAPI(QAxWidget):
+class KiwoomAPI(object):
     def __new__(cls, *args):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
@@ -30,38 +29,32 @@ class KiwoomAPI(QAxWidget):
         cls = type(self)
         if not hasattr(cls, "_init"):
             cls._init = True
-            super().__init__()
+            pythoncom.CoInitialize()
+
             self.login_event_loop = QEventLoop() #로그인 관련 이벤트 루프
             self.event_loop_CommRqData = QEventLoop()
             self.event_loop_SendOrder = QEventLoop()
 
-            
             # 초기 작업 
-            self.set_kiwoom_api() 
-            self.set_event_slot()
+            # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
+            self.ocx = QAxWidget("KHOPENAPI.KHOpenAPICtrl.1")
+            self.ocx.OnReceiveMsg.connect(self.E_OnReceiveMsg)
+            self.ocx.OnEventConnect.connect(self.E_OnEventConnect)              # 로그인 버전처리
+            self.ocx.OnReceiveTrData.connect(self.E_OnReceiveTrData)            # 조회와 실시간 데이터 처리
+            # self.ocx.OnReceiveRealData.connect(self.E_OnReceiveRealData)
+            self.ocx.OnReceiveChejanData.connect(self.E_OnReceiveChejanData)    # 체결정보 / 잔고정보 처리          
+            
             self.mdict_rq_data = {}
             self.mlist_output = []
             self.mlist_chejan_data = {}
             self.dict_not_signed_account = {}
 
+
             self.log.INFO("KiwoomAPI init")
-
-    # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
-    def set_kiwoom_api(self):
-        self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
-        
-    def set_event_slot(self):
-        self.OnReceiveMsg.connect(self.E_OnReceiveMsg)
-
-        # 로그인 버전처리
-        self.OnEventConnect.connect(self.E_OnEventConnect)
-        
-        # 조회와 실시간 데이터 처리
-        self.OnReceiveTrData.connect(self.E_OnReceiveTrData) 
-        # self.OnReceiveRealData.connect(self.E_OnReceiveRealData)
-
-        # 체결정보 / 잔고정보 처리
-        self.OnReceiveChejanData.connect(self.E_OnReceiveChejanData)
+    
+    
+    def __del__(self):
+        pythoncom.CoUninitialize()
 
     def E_OnReceiveMsg(self, sScrNo, sRQName, sTrCode, sMsg):
         self.log.INFO(sScrNo, sRQName, sTrCode, sMsg)
@@ -106,26 +99,27 @@ class KiwoomAPI(QAxWidget):
     ## OpenAPI 함수 ##
     # 키움증권 로그인 
     def login(self):
-        self.dynamicCall("CommConnect()")  # 시그널 함수 호출.
+        self.ocx.dynamicCall("CommConnect()")  # 시그널 함수 호출.
         self.login_event_loop.exec_()
+
 
     # 현재 계정 상태 표시    
     def print_login_connect_state(self):
-        isLogin = self.dynamicCall("GetConnectState()")
+        isLogin = self.ocx.dynamicCall("GetConnectState()")
 
         return 'Log in' if isLogin == 1 else 'Log out'
 
     # 내 정보 조회 기능 (이름, ID, 계좌개수, 계좌)
     def login_info(self):
-        istr__user_name = self.dynamicCall("GetLoginInfo(QString)", "USER_NAME")
-        istr__user_id = self.dynamicCall("GetLoginInfo(QString)", "USER_ID")
-        istr__account_count = self.dynamicCall("GetLoginInfo(QString)", "ACCOUNT_CNT")
-        istr__account_list = self.dynamicCall("GetLoginInfo(Qstring)", "ACCLIST")
+        istr__user_name = self.ocx.dynamicCall("GetLoginInfo(QString)", "USER_NAME")
+        istr__user_id = self.ocx.dynamicCall("GetLoginInfo(QString)", "USER_ID")
+        istr__account_count = self.ocx.dynamicCall("GetLoginInfo(QString)", "ACCOUNT_CNT")
+        istr__account_list = self.ocx.dynamicCall("GetLoginInfo(Qstring)", "ACCLIST")
         return istr__user_name, istr__user_id, istr__account_count, istr__account_list
 
     # 조회 요청
     def CommRqData(self, sRQName, sTrCode, nPrevNext, sScreenNo):
-        nRet = self.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
+        nRet = self.ocx.dynamicCall('CommRqData(String, String, int, String)', sRQName, sTrCode, nPrevNext, sScreenNo)
         if nRet != 0:
             self.log.CRITICAL("Failed to Request Data From Api", sRQName, sTrCode)
             self.log.INFO("Error Code", nRet, "Event Loop not Executed")
@@ -135,15 +129,15 @@ class KiwoomAPI(QAxWidget):
 
     # 조회 요청 시 TR의 Input 값을 지정
     def SetInputValue(self, sID, sValue):
-        self.dynamicCall('SetInputValue(String, String)', sID, sValue)
+        self.ocx.dynamicCall('SetInputValue(String, String)', sID, sValue)
 
     # 조회 수신한 멀티 데이터의 개수 (Max : 900개)
     def GetRepeatCnt(self, sTrCode, sRecordName):
-        return self.dynamicCall('GetRepeatCnt(String, String)', sTrCode, sRecordName)
+        return self.ocx.dynamicCall('GetRepeatCnt(String, String)', sTrCode, sRecordName)
 
     # 조회 데이터 요청
     def GetCommData(self, strTrCode, strRecordName, nIndex, strItemName):
-        idict_any_rq_data = self.dynamicCall('GetCommData(String, String, int, String)', strTrCode, strRecordName, nIndex, strItemName)
+        idict_any_rq_data = self.ocx.dynamicCall('GetCommData(String, String, int, String)', strTrCode, strRecordName, nIndex, strItemName)
 
         # print(ret)
         return idict_any_rq_data.strip()
@@ -151,48 +145,48 @@ class KiwoomAPI(QAxWidget):
     # TR 요청
     def Call_TR(self, strTrCode, sRQName):
         if sRQName == "실시간미체결요청":
-            cnt = self.dynamicCall(
+            cnt = self.ocx.dynamicCall(
                 "GetRepeatCnt(QString, QString)", strTrCode, sRQName)
 
             for i in range(cnt):
-                istr_stock_code = self.dynamicCall(
+                istr_stock_code = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "종목코드")
                 istr_stock_code = istr_stock_code.strip()
 
-                in_stock_order_number = self.dynamicCall(
+                in_stock_order_number = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문번호")
                 in_stock_order_number = int(in_stock_order_number)
 
-                istr_stock_name = self.dynamicCall(
+                istr_stock_name = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "종목명")
                 istr_stock_name = istr_stock_name.strip()
 
-                istr_stock_order_type = self.dynamicCall(
+                istr_stock_order_type = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문구분")
                 istr_stock_order_type = istr_stock_order_type.strip().lstrip('+').lstrip('-')
 
-                in_stock_order_price = self.dynamicCall(
+                in_stock_order_price = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문가격")
                 in_stock_order_price = int(in_stock_order_price)
 
-                in_stock_order_quantity = self.dynamicCall(
+                in_stock_order_quantity = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문수량")
                 in_stock_order_quantity = int(in_stock_order_quantity)
 
-                in_stock_not_signed_quantity = self.dynamicCall(
+                in_stock_not_signed_quantity = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "미체결수량")
                 in_stock_not_signed_quantity = int(in_stock_not_signed_quantity)
 
-                in_stock_signed_quantity = self.dynamicCall(
+                in_stock_signed_quantity = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "체결량")
                 in_stock_signed_quantity = int(in_stock_signed_quantity)
 
-                istr_stock_present_price = self.dynamicCall(
+                istr_stock_present_price = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "현재가")
                 istr_stock_present_price = int(
                     istr_stock_present_price.strip().lstrip('+').lstrip('-'))
 
-                istr_stock_order_status = self.dynamicCall(
+                istr_stock_order_status = self.ocx.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", strTrCode, sRQName, i, "주문상태")
                 istr_stock_order_status = istr_stock_order_status.strip()
 
@@ -252,11 +246,11 @@ class KiwoomAPI(QAxWidget):
     
     # 체결잔고 데이터 반환
     def GetChejanData(self, nFid):
-        return self.dynamicCall('GetChejanData(int)', nFid)
+        return self.ocx.dynamicCall('GetChejanData(int)', nFid)
     
     # 주식 주문을 서버로 전송, 에러코드 반환
     def SendOrder(self, sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo):
-        nRet = self.dynamicCall('SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)', [sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo])
+        nRet = self.ocx.dynamicCall('SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)', [sRQName, sScreenNo, sAccNo, nOrderType, sCode, nQty, nPrice, sHogaGb, sOrgOrderNo])
         self.event_loop_SendOrder.exec_()
 
         return nRet

@@ -22,6 +22,7 @@
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
 
 import sys
+import pythoncom
 from datetime import datetime
 from .LoggerLT import Logger
 from .KiwoomAPI import KiwoomAPI
@@ -47,10 +48,12 @@ class KiwoomMain:
 
             self.kiwoom = KiwoomAPI()
             self.kiwoom.login()
-            self.cls_SM = SharedMem()
+            self.cls_SM = SharedMem(self.Get_Login_Info())
             self.cls_DB = GetPutDB(self.cls_SM)
 
             self.log.INFO("KiwoomMain init")
+
+
 
 # ----------- #
     ##사용가능한 함수들
@@ -154,7 +157,9 @@ class KiwoomMain:
             return False
 
         if len(self.kiwoom.mdict_rq_data[sTrCode]['Data']) < const.INIT_DATA_AMOUNT:
-            self.log.CRITICAL("Fail to initialize", sStockID)
+            self.log.CRITICAL("Fail to initialize, Deleting", sStockID, "From SharedMem")
+            self.cls_SM.delete(n_StockID)
+
             return False
 
         obj_StockInstance = self.cls_SM.get_instance(n_StockID)

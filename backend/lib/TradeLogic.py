@@ -249,27 +249,31 @@ class TradeLogic:
         t_LastExecMFI = datetime.now().timestamp()
 
         while True:
+            try:
+                for key, value in self.cls_SM.get_shared_mem().items():
+                    #사용하는 이름은 무조건 constantsLT 파일에 등록이 되어있고 Stock인스턴스에 속성으로 초기화를 시켜줘야한다.
+                    if value.logic_option not in const.LOGIC_OPTION:
+                        time.sleep(1)
+                        continue
+                    
+                    if value.logic_option == 'LarryWilliams':
+                        self.Larry_Williams(key)
 
-            for key, value in self.cls_SM.get_shared_mem():
-                #사용하는 이름은 무조건 constantsLT 파일에 등록이 되어있고 Stock인스턴스에 속성으로 초기화를 시켜줘야한다.
-                if value.logic_option not in const.LOGIC_OPTION:
-                    time.sleep(1)
-                    continue
-                
-                if value.logic_option == 'LarryWilliams':
-                    self.Larry_Williams(key)
+                    #MFI 옵션 매수는 1시간에 1번만 실행
+                    elif value.logic_option == 'MFI':
+                        t_Now = datetime.now().timestamp()
+                        if t_Now - t_LastExecMFI > const.ONE_HOUR:
+                            self.Money_Flow_Index_Buy(key)
 
-                #MFI 옵션 매수는 1시간에 1번만 실행
-                elif value.logic_option == 'MFI':
-                    t_Now = datetime.now().timestamp()
-                    if t_Now - t_LastExecMFI > const.ONE_HOUR:
-                        self.Money_Flow_Index_Buy(key)
+                        t_LastExecMFI = datetime.now().timestamp()
+                        self.Money_Flow_Index_Sell(key)
 
-                    t_LastExecMFI = datetime.now().timestamp()
-                    self.Money_Flow_Index_Sell(key)
+                    elif value.logic_option == 'ClosingPrice':
+                        self.Closing_Price(key)
 
-                elif value.logic_option == 'ClosingPrice':
-                    self.Closing_Price(key)
+            except RuntimeError as re: #실행되는 중간에 관심종목 add되면 RunTimeError발생하고 스레드 종료됨
+                self.log.ERROR(re)
+                continue
 
             time.sleep(1)
             

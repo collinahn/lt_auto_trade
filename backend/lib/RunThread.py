@@ -29,9 +29,9 @@ from .TradeLogic import TradeLogic
 from .LoggerLT import Logger
 from . import constantsLT as const
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QThread, QObject, Qt
+from PyQt5.QtCore import QThread
 
-class RunThread(object):
+class RunThread(QThread):
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
@@ -45,17 +45,12 @@ class RunThread(object):
         cls = type(self)
         if not hasattr(cls, "_init"):
             cls._init = True
-            # super(self.__class__, self).__init__(parent)
             # if문 내부에서 초기화 진행
+            super().__init__()
+            self.qapp = QApplication(sys.argv)
 
-            # self.qth_Thread = QThread()
+
             self.cls_SR = SendRequest2Api()
-            # self.cls_SR.moveToThread(self.qth_Thread)
-            # # self.cls_SR.finished.connect(self.qth_Thread.quit)
-            # self.qth_Thread.started.connect(self.cls_SR.run)
-            # # self.qth_Thread.finished.connect(self.qapp.exit)
-            # self.qth_Thread.start()
-
             self.cls_SM = SharedMem()
             self.cls_DB = GetPutDB(self.cls_SM)
             self.cls_TL = TradeLogic()
@@ -122,6 +117,7 @@ class RunThread(object):
     def update_info(self):
         b_SetTimer = True
         t_LastUpdated = datetime.now()
+        self.log.DEBUG("update_info thread start")
 
         while True:
             t_Now = datetime.now()
@@ -139,14 +135,17 @@ class RunThread(object):
             
     #매매의사결정 함수 호출
     def call_price(self):
+        self.log.DEBUG("call_price thread start")
 
         self.cls_TL.show_me_the_money()
     
     #의사결정 스레드의 요청대로 api호출하여 주문한다.
     #1초에 최대 5번까지 처리가 가능하다.
     def call_api(self):
+        self.log.DEBUG("call_api thread start")
         
-        self.cls_SR.Send_Request_Throttle()
+        # self.cls_SR.Send_Request_Throttle()
+        self.cls_SR.start()
 
     #db의 tracking info 참조하여 공유메모리에 올림(실행 후 초기화시 실행)
     def load_db(self):
@@ -159,7 +158,7 @@ class RunThread(object):
         #-----------스레드 등록-----------
         self.lst_Threads.append(Thread(target=self._debug))
         self.lst_Threads.append(Thread(target=self.update_info))
-        self.lst_Threads.append(Thread(target=self.call_api))
+        # self.lst_Threads.append(Thread(target=self.call_api))
         self.lst_Threads.append(Thread(target=self.call_price))
         #-----------스레드 등록-----------
         
@@ -170,13 +169,16 @@ class RunThread(object):
             work.start()
             self.log.INFO("thread start: ", work)
 
-        # self.call_api() #QThread
+        self.call_api() #QThread
 
         
         #무한루프를 돌리기 때문에 이 이후로는 실행되지 않는다.
         for work in self.lst_Threads:
             work.join()
             self.log.CRITICAL("Thread Joined !", work)
+
+    def run(self):
+        self.run_system()
 
 
 if __name__ == "__main__":
