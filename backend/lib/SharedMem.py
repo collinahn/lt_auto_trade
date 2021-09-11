@@ -16,6 +16,7 @@ import time
 from .Stocks import Stock
 from .LoggerLT import Logger
 from .utilsLT import QueueLT
+from . import utilsLT as utils
 from . import constantsLT as const
 from .GetPutDB import GetPutDB
 
@@ -67,6 +68,9 @@ class SharedMem(object):
 
     #key 값 = 종목코드
     def add(self, nKey: int, sLogicOption: str='') -> None:
+        if utils.getStringTick(nKey) == '000000':
+            return
+
         self.__mdict_MstObject[nKey] = Stock(nKey, sLogicOption)
 
         self.log.INFO("New Stock Instance:", nKey, sLogicOption)
