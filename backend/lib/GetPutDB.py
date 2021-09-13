@@ -134,7 +134,7 @@ class GetPutDB(object):
             con.row_factory = sqlite3.Row
             curs = con.cursor()
             #stockName은 최적화시 빼도된다
-            query = """INSERT OR REPLACE INTO \
+            query = """INSERT OR IGNORE INTO \
                         tStockProperties(stockID, stockName, stockCurrentPossess, stockCurrentValue, timeLastUpdate ) 
                         Values(?,?,?,?,?);"""
             curs.execute(query, \
