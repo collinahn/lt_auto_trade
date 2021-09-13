@@ -20,7 +20,7 @@
 
 import sys
 import time
-from threading import Thread, Timer
+from threading import Thread, Timer, current_thread
 from datetime import datetime
 from .SendRequest2Api import SendRequest2Api
 from .SharedMem import SharedMem
@@ -28,8 +28,10 @@ from .GetPutDB import GetPutDB
 from .TradeLogic import TradeLogic
 from .LoggerLT import Logger
 from . import constantsLT as const
+from PyQt5.QAxContainer import QAxWidget
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtRemoveInputHook
+import pythoncom
 
 class RunThread(QThread):
 
@@ -41,14 +43,12 @@ class RunThread(QThread):
         cls.log.INFO(cls._instance)
         return cls._instance
 
-    def __init__(self, parent=None):
+    def __init__(self):
         cls = type(self)
         if not hasattr(cls, "_init"):
             cls._init = True
             # if문 내부에서 초기화 진행
             super().__init__()
-            self.qapp = QApplication(sys.argv)
-
 
             self.cls_SR = SendRequest2Api()
             self.cls_SM = SharedMem()
@@ -143,13 +143,17 @@ class RunThread(QThread):
     #1초에 최대 5번까지 처리가 가능하다.
     def call_api(self):
         self.log.DEBUG("call_api thread start")
-        
-        # self.cls_SR.Send_Request_Throttle()
+
         self.cls_SR.start()
 
     #db의 tracking info 참조하여 공유메모리에 올림(실행 후 초기화시 실행)
-    def load_db(self):
-        pass
+    def load_db(self) -> None:
+        lst_Possessed = self.cls_DB.get_possessed()
+        self.log.DEBUG(lst_Possessed)
+
+        if not lst_Possessed: return
+        for records in lst_Possessed:
+            self.cls_SM.add(records[0])
 
     #스레드를 가동한다.
     def run_system(self):
@@ -161,6 +165,10 @@ class RunThread(QThread):
         # self.lst_Threads.append(Thread(target=self.call_api))
         self.lst_Threads.append(Thread(target=self.call_price))
         #-----------스레드 등록-----------
+
+        #----------QThread 객체 실행------
+        self.call_api()   #키움증권 로그인 및 키움api 관련 기능 실행
+        #--------------------------------
         
         self.log.DEBUG("threads: ", self.lst_Threads)
 
@@ -169,7 +177,6 @@ class RunThread(QThread):
             work.start()
             self.log.INFO("thread start: ", work)
 
-        self.call_api() #QThread
 
         
         #무한루프를 돌리기 때문에 이 이후로는 실행되지 않는다.
@@ -184,17 +191,23 @@ class RunThread(QThread):
 if __name__ == "__main__":
 
 
-    rt = RunThread()
-    sm = SharedMem()
-    sm.add(5930)
-    sm.add(5360)
-    sm.add(70)
-    sm.add(80)
-    sm.add(1040)
-    sm.add(9415)
-    sm.add(35720)
-    sm.add(28260)
-    sm.add(29460)
-    sm.add(28050)
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # ctrl + c로 종료할 수 있도록
 
-    rt.run_system()
+    rt = RunThread()
+    # sm = SharedMem()
+    # sm.add(5930)
+    # sm.add(5360)
+    # sm.add(70)
+    # sm.add(80)
+    # sm.add(1040)
+    # sm.add(9415)
+    # sm.add(35720)
+    # sm.add(28260)
+    # sm.add(29460)
+    # sm.add(28050)
+
+    # rt.run_system()
+    rt.start()
+    while True:
+        time.sleep(5)

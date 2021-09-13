@@ -37,6 +37,29 @@ class GetPutDB(object):
 
             self.log.INFO("GetPutDB init")
 
+
+    #프로그램 시작 시 db에서 보유종목을 가져다가 공유메모리에 등록하기위해 해당하는 리스트 반환
+    def get_possessed(self) -> list:
+        con: Connection = None
+        s_TableName = 'tStockProperties'
+        s_Possessed = 'T'
+
+        try:
+            con = sqlite3.connect(self.__db_path)
+            curs = con.cursor()
+            query = f"""SELECT `stockID` \
+                FROM { s_TableName } \
+                WHERE `stockUsed`=?;"""
+            curs.execute(query, (s_Possessed, ))
+            rows = curs.fetchall()
+
+            con.commit()
+            con.close()
+        except Exception as e:
+            return self.exception_handling(e, con)
+        return rows     #[(9415,), (28050,)]
+
+
     #메인 메모리 요소들을 DB에 저장
     #만약 한 번에 한 주씩 업데이트 하지 않고 보유한 인스턴스들에 대한 DB업데이트를 한 번에 한다면?
     #deprecated
@@ -72,7 +95,7 @@ class GetPutDB(object):
         con: Connection = None
         list_Info4Execute: list = self.__shared_mem.get_property_info4sql()
         if not list_Info4Execute:
-            self.log.WARNING("DB Update Not Executed - Might be Temporary Problem")
+            self.log.WARNING("DB Update Not Executed - Might be a Temporary Problem")
             return False
 
         try:
@@ -322,7 +345,6 @@ class GetPutDB(object):
 
         try:
             con = sqlite3.connect(self.__db_path)
-            con.row_factory = sqlite3.Row
             curs = con.cursor()
             query = f"""SELECT * \
                 FROM {s_TableName} \
