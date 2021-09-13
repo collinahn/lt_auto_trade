@@ -38,6 +38,7 @@ class KiwoomAPI(object):
             # 초기 작업 
             # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
             self.ocx = QAxWidget("KHOPENAPI.KHOpenAPICtrl.1")
+            # self.ocx = args[0]
             self.ocx.OnReceiveMsg.connect(self.E_OnReceiveMsg)
             self.ocx.OnEventConnect.connect(self.E_OnEventConnect)              # 로그인 버전처리
             self.ocx.OnReceiveTrData.connect(self.E_OnReceiveTrData)            # 조회와 실시간 데이터 처리
@@ -51,6 +52,8 @@ class KiwoomAPI(object):
 
 
             self.log.INFO("KiwoomAPI init")
+            pythoncom.CoUninitialize()
+
     
     
     def __del__(self):
@@ -93,14 +96,14 @@ class KiwoomAPI(object):
             self.mlist_chejan_data["잔고통보"] = [self.GetChejanData(9001), self.GetChejanData(930), self.GetChejanData(10)]
 
         self.event_loop_SendOrder.exit()
-        # print(sGubun, nItemCnt, sFidList)
 
 
     ## OpenAPI 함수 ##
     # 키움증권 로그인 
     def login(self):
+        pythoncom.CoInitialize()
         self.ocx.dynamicCall("CommConnect()")  # 시그널 함수 호출.
-        self.login_event_loop.exec_()
+        self.login_event_loop.exec()
 
 
     # 현재 계정 상태 표시    

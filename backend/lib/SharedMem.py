@@ -93,7 +93,6 @@ class SharedMem(object):
 
     #종목을 보유 중인지 확인한다
     def check_possess(self, nKey: int) -> bool:
-        self.log.DEBUG(self.__mdict_MstObject)
         return nKey in self.__mdict_MstObject
 
     #인스턴스를 반환한다.

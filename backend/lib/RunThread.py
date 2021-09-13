@@ -149,7 +149,6 @@ class RunThread(QThread):
     #db의 tracking info 참조하여 공유메모리에 올림(실행 후 초기화시 실행)
     def load_db(self) -> None:
         lst_Possessed = self.cls_DB.get_possessed()
-        self.log.DEBUG(lst_Possessed)
 
         if not lst_Possessed: return
         for records in lst_Possessed:

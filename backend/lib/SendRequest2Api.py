@@ -11,9 +11,9 @@ from .LoggerLT import Logger
 from .SharedMem import SharedMem
 from .utilsLT import QueueLT
 from .KiwoomMain import KiwoomMain
-from threading import Thread
+from threading import Lock
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QObject, QThread
+from PyQt5.QtCore import QThread
 from . import utilsLT as utils
 from . import constantsLT as const
 
@@ -39,8 +39,13 @@ class SendRequest2Api(QThread):
             # #키움 초기화 및 로그인 처리
             # self.qapp = QApplication(sys.argv)
 
+            # self.cls_KW = KiwoomMain()
+            # self.lst_usr_info = self.cls_KW.Get_Login_Info()
+            # self.cls_SM = SharedMem(self.lst_usr_info)
+
             self.iq_Threads = QueueLT(const.REQUEST_QUEUE_SIZE, "Threads4Request")
 
+            self.lock = Lock()
             self.log.INFO("SendRequest2Api Qthread init")
 
     def __del__(self):
@@ -57,21 +62,19 @@ class SendRequest2Api(QThread):
         n_StockID = dict_Target["StockID"]
         s_StockID =  utils.getStringTick(n_StockID) #6자리로 고정
         s_AccountNo = self.lst_usr_info[-1] if "," not in self.lst_usr_info[-1] else self.lst_usr_info[:8]
-        # self.log.DEBUG(self.lst_usr_info)
         # self.log.DEBUG("nStockID:", n_StockID, "sStockID:", s_StockID, "account:", s_AccountNo)
+
         try:
             if dict_Target["Buy"] == const.UPDATE_INFO:
                 bInitAfterMarketClosed = None if dict_Target["Sell"] == const.UPDATE_BEFORE_CLOSED else True
-                # self.iq_Threads.pushQueue(Thread(target=self.cls_KW.Get_Basic_Stock_Info, args=(s_StockID, bInitAfterMarketClosed, )))
-                # self.iq_Threads.getTail().run()
                 self.cls_KW.Get_Basic_Stock_Info(s_StockID, bInitAfterMarketClosed)
                 self.log.INFO("Got Current Stock Info ", s_StockID)
 
             elif dict_Target["Buy"] == const.INITIALIZE_INFO:
-                # self.iq_Threads.pushQueue(Thread(target=self.cls_KW.Get_Init_Info, args=(s_StockID, )))
-                # self.iq_Threads.getTail().run()
-                self.cls_KW.Get_Init_Info(s_StockID)
-                self.log.INFO("Got Initial Stock Info ", s_StockID)
+                if self.cls_KW.Get_Init_Info(s_StockID):
+                    self.log.INFO("Got Initial Stock Info", s_StockID)
+                else:
+                    self.log.ERROR("Failed to Get Initial Stock Info", s_StockID)
 
             elif dict_Target["Buy"] > 0 and dict_Target["Sell"] == 0:
                 n_quantity = dict_Target["Buy"]
@@ -94,12 +97,14 @@ class SendRequest2Api(QThread):
             queue4Request.pullQueue()
             return 1
 
-    # 이 함수가 RunThread에서 호출된다
+    # RunThread에서 qthread로 호출되는 함수
     def Send_Request_Throttle(self):
 
+        self.qapp = QApplication(sys.argv)
         self.cls_KW = KiwoomMain()
+        self.cls_KW.kiwoom.login()
         self.lst_usr_info = self.cls_KW.Get_Login_Info()
-        self.cls_SM = SharedMem(self.lst_usr_info)
+        self.cls_SM = SharedMem(self.lst_usr_info) #여기서 공유메모리가 뒤늦게 초기화된다 
 
         q_RequestFmLogic = QueueLT(const.REQUEST_QUEUE_SIZE, "Queue4Request2Api")
         n_ApiCallCnt = 0
@@ -108,7 +113,7 @@ class SendRequest2Api(QThread):
             #큐가 비어있다면 휴식하거나 스레드 자원 회수
             if q_RequestFmLogic.isEmpty():
                 # if not self.iq_Threads.isEmpty(): #and not self.iq_Threads.getHead().is_alive():
-                    # self.iq_Threads.getHead().join(timeout=0.5)
+                #     self.iq_Threads.getHead().join(timeout=0.5)
                 #     self.iq_Threads.pullQueue()
                 #     self.log.INFO("Request Thread joined")
 
@@ -118,7 +123,9 @@ class SendRequest2Api(QThread):
                 n_ApiCallCnt = 0
                 continue
 
+            pythoncom.CoInitialize()
             n_ApiCallCnt += self.Send_Request(q_RequestFmLogic)
+            pythoncom.CoUninitialize()
 
             #api 요청 횟수가 과도하다면 api를 통한 요청이 씹히므로 충분히 쉰다.
             #timestamp를 호출하는데 드는 비용을 생각하면 1초 미만의 시간을 주는 것이 맞지만 일단 1초 줌

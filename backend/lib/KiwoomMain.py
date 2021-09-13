@@ -34,7 +34,7 @@ from . import constantsLT as const
 from .GetPutDB import GetPutDB
 
 class KiwoomMain:
-    def __new__(cls):
+    def __new__(cls, *args):
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls)
             cls.log = Logger()
@@ -46,9 +46,9 @@ class KiwoomMain:
         if not hasattr(cls, "_init"):
             cls._init = True
 
+
             self.kiwoom = KiwoomAPI()
-            self.kiwoom.login()
-            self.cls_SM = SharedMem(self.Get_Login_Info())
+            self.cls_SM = SharedMem()
             self.cls_DB = GetPutDB(self.cls_SM)
 
             self.log.INFO("KiwoomMain init")
@@ -87,17 +87,13 @@ class KiwoomMain:
 
         if sFieldName == "종목코드":
             self._Update_SM(sFieldInfo, sTrCode, bMarketClosed)
-            self.log.DEBUG(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0])
+            # self.log.DEBUG(self.kiwoom.mdict_rq_data[sTrCode]['Data'][0])
 
         return self.kiwoom.mdict_rq_data[sTrCode]['Data']
 
 
     def _Update_SM(self, sStockID: str, sTrCode: str, bIsMarketClosed: bool=False) -> bool:
-        try:
-            n_StockID = int(sStockID)
-        except ValueError as ve:
-            self.log.ERROR("Cannot Update SharedMem", ve)
-            return False
+        n_StockID = utils.getIntLT(sStockID)
 
         obj_StockInstance = self.cls_SM.get_instance(n_StockID)
         if obj_StockInstance is None:
@@ -131,12 +127,11 @@ class KiwoomMain:
         return True
 
     #14영업일 이전부터 현재까지의 기록을 수정주가로 받아온다.
-    def Get_Init_Info(self, sStockID):
+    def Get_Init_Info(self, sStockID) -> bool:
         return self._Callback_Init_Info('OPT10081', sStockID)
 
 
-    def _Callback_Init_Info(self, sTrCode, sStockID) -> int:
-        self.log.DEBUG(utils.getTodayYmdLT())
+    def _Callback_Init_Info(self, sTrCode, sStockID) -> bool:
         self.kiwoom.mlist_output = output_list[sTrCode]
         self.kiwoom.SetInputValue("종목코드", sStockID)
         self.kiwoom.SetInputValue("기준일자", utils.getTodayYmdLT())
@@ -144,22 +139,17 @@ class KiwoomMain:
         nRet = self.kiwoom.CommRqData(sTrCode, sTrCode, 0, '0101')
         if nRet != 0:
             self.log.CRITICAL("Failed to Request Init Data", sStockID, sTrCode)
-            return []
+            return False
 
         return self._Init_SM(sStockID, sTrCode)
 
 
     def _Init_SM(self, sStockID: str, sTrCode: str) -> bool:
-        try:
-            n_StockID = int(sStockID)
-        except ValueError as ve:
-            self.log.ERROR("Cannot Update SharedMem", ve)
-            return False
+        n_StockID = utils.getIntLT(sStockID)
 
         if len(self.kiwoom.mdict_rq_data[sTrCode]['Data']) < const.INIT_DATA_AMOUNT:
             self.log.CRITICAL("Fail to initialize, Deleting", sStockID, "From SharedMem")
             self.cls_SM.delete(n_StockID)
-
             return False
 
         obj_StockInstance = self.cls_SM.get_instance(n_StockID)
@@ -168,7 +158,7 @@ class KiwoomMain:
             return False
 
         lst_init_data = self.kiwoom.mdict_rq_data[sTrCode]['Data'][0:const.STOCK_COMMON_SIZE][::-1] #14일치 정보만 가져온다
-        self.log.INFO("reversed", lst_init_data)
+        # self.log.INFO("reversed", lst_init_data)
 
         #가져온 14일치 정보로 초기화 해줌
         for dct_DayInfo in lst_init_data:
