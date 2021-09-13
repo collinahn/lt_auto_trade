@@ -122,12 +122,14 @@ class SharedMem(object):
     def get_property_info4sql(self) -> List:
         list_Ret = []
         for key, value in self.__mdict_MstObject.items():
-            tuple_Ret = (value.name, \
-                        value.quantity, 
-                        value.price, 
-                        value.updated_time, 
-                        key)
-            list_Ret.append(tuple_Ret)
+            #생성 후 아무런 값이 없는 상태면 업데이트할 정보를 보내지 않는다
+            if value.price != 0: 
+                tuple_Ret = (value.name, \
+                            value.quantity, 
+                            value.price, 
+                            value.updated_time, 
+                            key)
+                list_Ret.append(tuple_Ret)
         
         return list_Ret
 
@@ -180,6 +182,7 @@ class SharedMem(object):
             self.log.INFO("Info Request After 6PM Pushed", dct_InfoRequest)
 
 
+    #사용안함
     #타 스레드에서 최초에 값을 채워넣고 장마감이후 하루에 한 번 timer로 호출
     def update_trade_volume(self):
         for obj_Target in self.__mdict_MstObject.values():
@@ -189,6 +192,7 @@ class SharedMem(object):
         self.log.INFO("Shared Memory Updated: Total Trade Volume(should be presented once a day)")
 
 
+    #사용안함
     #타 스레드에서 주기적으로 호출 1
     def update_current_stock_price(self):
         for obj_Target in self.__mdict_MstObject.values():
@@ -197,6 +201,7 @@ class SharedMem(object):
             pass
         self.log.INFO("Shared Memory Updated: Price")
 
+    #사용안함
     #평균 매수단가를 업데이트한다. 2
     def update_average_price_bought(self):
         for obj_Target in self.__mdict_MstObject.values():
@@ -205,6 +210,7 @@ class SharedMem(object):
             pass
         self.log.INFO("Shared Memory Updated: Average Price Bought")
         
+    #사용안함
     #타 스레드에서 주기적으로 호출 3
     # 거래량의 경우 신뢰도를 위해 api쪽에서 받아온 데이터와 자체적으로 갖고있는 데이터를 비교 후 업데이트해야한다.
     def update_current_stock_quantity(self):
@@ -239,12 +245,7 @@ class SharedMem(object):
 
     #다른 스레드에서 이거 하나만 호출해도 된다.
     def update_request(self):
-        self.push_update_request()
-        # self.update_current_stock_price()
-        # self.update_average_price_bought()
-        # self.update_current_stock_quantity()
-        # self.update_last_updated()
-        
+        self.push_update_request()  
             
 
 

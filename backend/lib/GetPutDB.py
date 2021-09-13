@@ -71,6 +71,9 @@ class GetPutDB(object):
     def update_properties(self) -> bool:
         con: Connection = None
         list_Info4Execute: list = self.__shared_mem.get_property_info4sql()
+        if not list_Info4Execute:
+            self.log.WARNING("DB Update Not Executed - Might be Temporary Problem")
+            return False
 
         try:
             con = sqlite3.connect(self.__db_path)
