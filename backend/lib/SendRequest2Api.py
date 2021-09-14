@@ -36,13 +36,6 @@ class SendRequest2Api(QThread):
             cls._init = True
             super().__init__()
 
-            # #키움 초기화 및 로그인 처리
-            # self.qapp = QApplication(sys.argv)
-
-            # self.cls_KW = KiwoomMain()
-            # self.lst_usr_info = self.cls_KW.Get_Login_Info()
-            # self.cls_SM = SharedMem(self.lst_usr_info)
-
             self.iq_Threads = QueueLT(const.REQUEST_QUEUE_SIZE, "Threads4Request")
 
             self.lock = Lock()

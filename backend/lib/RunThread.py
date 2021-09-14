@@ -18,9 +18,8 @@
 # import signal
 # signal.signal(signal.SIGINT, signal.SIG_DFL) # ctrl + c로 종료할 수 있도록
 
-import sys
 import time
-from threading import Thread, Timer, current_thread
+from threading import Thread, Timer
 from datetime import datetime
 from .SendRequest2Api import SendRequest2Api
 from .SharedMem import SharedMem
@@ -28,10 +27,7 @@ from .GetPutDB import GetPutDB
 from .TradeLogic import TradeLogic
 from .LoggerLT import Logger
 from . import constantsLT as const
-from PyQt5.QAxContainer import QAxWidget
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QThread, pyqtRemoveInputHook
-import pythoncom
+from PyQt5.QtCore import QThread
 
 class RunThread(QThread):
 
@@ -76,9 +72,21 @@ class RunThread(QThread):
                 continue
 
             obj = self.cls_SM.get_instance(int(s_input))
+            #없으면 추가하고 있으면 지울건지 물어봄
             if obj is None:
-                self.log.DEBUG("ERROR: Non Existing Stock ID")
-                self.cls_SM.add(int(s_input))
+                self.log.DEBUG("***input logic option***", const.LOGIC_OPTION)
+                s_option = input()
+                if s_option in const.LOGIC_OPTION:
+                    self.cls_SM.add(int(s_input), s_option)
+                else:
+                    self.log.DEBUG("***failed, try again***")
+                    self.cls_SM.add(int(s_input))
+                continue
+            
+            self.log.DEBUG(f"***input del to delete stock {s_input}***")
+            if input() == 'del':
+                self.cls_SM.delete(int(s_input))
+                self.log.DEBUG(f"***{s_input} stock deleted***")
                 continue
 
             print( \
@@ -152,7 +160,7 @@ class RunThread(QThread):
 
         if not lst_Possessed: return
         for records in lst_Possessed:
-            self.cls_SM.add(records[0])
+            self.cls_SM.add(records[0], records[1])
 
     #스레드를 가동한다.
     def run_system(self):

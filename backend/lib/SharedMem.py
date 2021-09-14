@@ -83,6 +83,9 @@ class SharedMem(object):
 
     def delete(self, nKey: int) -> None:
         try:
+            #stock클래스 멤버변수 정리
+            self.get_instance(nKey).delete_stock()
+            #sharedmem클래스 멤버변수 정리
             del(self.__mdict_MstObject[nKey])
 
             self.cls_DB.update_stock_tracking_info(nKey, False)
@@ -124,6 +127,7 @@ class SharedMem(object):
             #생성 후 아무런 값이 없는 상태면 업데이트할 정보를 보내지 않는다
             if value.price != 0: 
                 tuple_Ret = (value.name, \
+                            value.logic_option,
                             value.quantity, 
                             value.price, 
                             value.updated_time, 

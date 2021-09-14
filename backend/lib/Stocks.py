@@ -76,16 +76,24 @@ class Stock(object):
             Stock.__mset_Stocks.add(nStockID)
 
             self.log.INFO("Stock init:", nStockID, self._instance)
+
     
     def __hash__(self, *args):
         return hash((self.args[0]))
 
+
     #파이썬 gc 주기에 의해 즉시 반영이 안 될수도 있음
     def __del__(self):
-        print(datetime.now(), "Stock Deleted", self.__in_Ticker)
+        print(datetime.now(), "Stock instance collected")
+
+
+    def delete_stock(self):
+        self.log.INFO("Stock Deleted", self.__in_Ticker)
         Stock.__mn_TotalStock -= 1
         Stock.__mdict_ObjCalled[self.__in_Ticker] = False
+        Stock.__mset_Stocks.remove(self.__in_Ticker)
         del(Stock.__mdict_Obj[self.__in_Ticker]) #제거되고 나면 추후 추가될 때 새로 인스턴스 생성
+
 
     @property
     def ticker(self) -> int:
@@ -175,12 +183,16 @@ class Stock(object):
     #tp가 양이면 true, 아니면 false를 덧붙여 반환한다.
     def _rmf(self, nthDate: int):
         # 최근 순으로 14개를 계산할 거임. 이때 두 리스트의 크기는 14보다 커야한다.
-        lst_priceData = self.__iq_PriceDataQueue.getTrimmedList().reverse()
-        lst_volume = self.__iq_TotalTradeVolume.getTrimmedList().reverse()
+        lst_priceData = self.__iq_PriceDataQueue.getTrimmedList()[::-1]
+        lst_volume = self.__iq_TotalTradeVolume.getTrimmedList()[::-1]
+
+        if lst_priceData is None or lst_volume is None:
+            self.log.DEBUG("no list", lst_priceData, lst_volume)
+            return None, False
 
         if len(lst_priceData) < const.MFI_STANDARD+1 and len(lst_volume) < const.MFI_STANDARD+1:
-            self.log.CRITICAL("PriceData and TradeVolume Queue Data Not Enough > Check Initiating After Stock Added !")
-            raise ValueError
+            self.log.WARNING("PriceData and TradeVolume Queue Data Not Enough > WAITING FOR QUEUE TO BE INITIALIZED")
+            return None, False
 
         bRet = False
         if self._tp(lst_priceData[nthDate]) > self._tp(lst_priceData[nthDate+1]): #전일보다 큼: 양의 tp
@@ -195,6 +207,8 @@ class Stock(object):
 
         for idx in range(const.MFI_STANDARD):
             rmf, bSign = self._rmf(idx)
+            if not rmf:
+                return -1
             if bSign == True:
                 pos_rmf += rmf
             else:
@@ -208,7 +222,7 @@ class Stock(object):
         try:
             return 100 - (100 / (1+self.mfr()))
         except ZeroDivisionError as ze:
-            self.log.ERROR("Negative RMF sum 0", ze)
+            # self.log.ERROR("Rogue Price Data / Error", ze)
             return -1
 
     @name.setter

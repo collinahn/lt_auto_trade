@@ -22,7 +22,6 @@
 ## 설명: KiwoomAPI 파일에서 api관련 함수들을 다 다루고, KiwoomMain에서 실제 거래와 관련된 함수들을 만들어 다룬다.
 
 import sys
-import pythoncom
 from datetime import datetime
 from .LoggerLT import Logger
 from .KiwoomAPI import KiwoomAPI

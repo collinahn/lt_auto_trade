@@ -47,7 +47,7 @@ class GetPutDB(object):
         try:
             con = sqlite3.connect(self.__db_path)
             curs = con.cursor()
-            query = f"""SELECT `stockID` \
+            query = f"""SELECT `stockID`, `logicOption` \
                 FROM { s_TableName } \
                 WHERE `stockUsed`=?;"""
             curs.execute(query, (s_Possessed, ))
@@ -104,11 +104,12 @@ class GetPutDB(object):
             curs = con.cursor()
             #stockName은 최적화시 빼도된다
             query = """UPDATE tStockProperties SET \
-                `stockName`=?, \
-                `stockCurrentPossess`=?, \
-                `stockCurrentValue`=?, \
-                `timeLastUpdate`=? \
-                WHERE `stockID`=?;"""
+                    `stockName`=?, 
+                    `logicOption`=?,
+                    `stockCurrentPossess`=?, 
+                    `stockCurrentValue`=?, 
+                    `timeLastUpdate`=? 
+                    WHERE `stockID`=?;"""
             curs.executemany(query, list_Info4Execute)
 
             con.commit()
@@ -125,7 +126,7 @@ class GetPutDB(object):
     def update_stock_tracking_info(self, nStockID: int, bUsed=True) -> bool:
         con: Connection = None
         c_CurruentState: str    = 'N' if bUsed == False else 'T'
-        s_NowTime: str          =str(datetime.now())
+        s_NowTime: str          = str(datetime.now())
 
         try:
             con = sqlite3.connect(self.__db_path)
@@ -143,12 +144,13 @@ class GetPutDB(object):
             return self.exception_handling(e, con)
         return True
 
-    #최초 실행시 db 칼럼을 초기화한다.
+    #관심종목으로 추가될 때 칼럼을 추가한다
     def add_property_column(self, nStockID: int) -> bool:
         con: Connection = None
         try:
             obj_Instance    = self.__shared_mem.get_instance(nStockID)
             s_Name: str     = obj_Instance.name
+            s_Logic: str    = obj_Instance.logic_option
             n_Quantity: int = obj_Instance.quantity
             n_Value: int    = obj_Instance.price
             s_Time: str     = obj_Instance.updated_time
@@ -158,11 +160,12 @@ class GetPutDB(object):
             curs = con.cursor()
             #stockName은 최적화시 빼도된다
             query = """INSERT OR IGNORE INTO \
-                        tStockProperties(stockID, stockName, stockCurrentPossess, stockCurrentValue, timeLastUpdate ) 
-                        Values(?,?,?,?,?);"""
+                        tStockProperties(stockID, stockName, logicOption, stockCurrentPossess, stockCurrentValue, timeLastUpdate ) 
+                        Values(?,?,?,?,?,?);"""
             curs.execute(query, \
                         (nStockID, 
                         s_Name, 
+                        s_Logic,
                         n_Quantity, 
                         n_Value, 
                         s_Time))
@@ -174,6 +177,7 @@ class GetPutDB(object):
         return True
 
     #auto increment 설정되어있는 필드를 초기화
+    #사용안함
     def init_table_autoincrement(self, con: Connection, curs: Cursor, sTableName: str, nStockID: int):
         query_CheckExists = f"""SELECT EXISTS(SELECT * FROM {sTableName} WHERE rowNo=1)"""
         curs.execute(query_CheckExists)
