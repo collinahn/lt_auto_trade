@@ -1,22 +1,23 @@
-# System Trading
+# 증권사API를 이용한 주식자동매매 시스템과 웹을 통한 모니터링 및 제어
 
 ### Description
 * 주식 자동 매매 프로그램
-  * 상시 돌아가며 자동 매매를 하고, 사용자가 원한다면 웹을 통해 개입하여 사거나 팔 수 있다.
+  * 상시 돌아가며 자동 매매를 하고, 사용자가 원한다면 웹브라우져을 통해 개입하여 사거나 팔 수 있다.
+  * 메인 스레드에서 Django 서버를 띄우고 서버를 띄우기 전 서브 스레드에서 시스템트레이딩 시스템을 가동한다. 
+
 * 대상이 되는 종목의 수 만큼 객체를 생성하여 여러 스레드에서 활용하는 공유메모리로 사용한다.
-  * 일정 주기로 api를 통해 객체 내부의 정보를 업데이트한다.
-  * 이벤트가 발생할 때마다 DB에 저장한다.
-  * 웹에서 요청이 있을 때 공유메모리에서 값을 읽어들인다.
-  * DB는 프로그램을 재시작해서 공유메모리를 초기화하거나 대량의 정보를 처리할 때 사용한다.
+  * 일정 주기로 키움증권api를 통해 객체 내부의 정보를 업데이트한다.
+  * 이벤트가 발생할 때 공유메모리에 올라가있는 항목들을 DB에 저장한다.
+  * 웹에서 요청이 있을 때, 상태 정보는 공유메모리에서, 거래 정보는 DB에서 읽어들인다.
+  * DB는 프로그램을 재시작했을 시 공유메모리를 초기화하거나 대량의 정보를 처리할 때 사용한다.
 
 ### Environment
-* Windows
+* Windows 10
 * Python 3.8 interpreter
 
 ### Prerequisite
-* Anaconda3 2021.05 (for python3.8)
-* 키움증권 api (32-bit python)
-
+* Anaconda3 2021.05 (for python3.8) - 32비트 가상환경에서 실행
+* 키움증권 API (32-bit python)
 
 ### Files
 * Stocks.py
@@ -93,4 +94,29 @@ class SharedMem(object):
 ```
 
 ### Usage
-* 
+ * Anaconda3 32bit 가상환경 구성하기
+```
+ # conda prompt
+ > set CONDA_FORCE_32BIT=1
+ > conda create -n {가상환경이름} python=3.8
+```
+
+ * 가상환경 실행
+```
+ # conda prompt, cmd
+ > conda activate {가상환경이름}
+```
+
+ * 패키지
+```
+ > pip install django
+ > pip install django-cors-headers
+ > pip install django-rest-framework
+ 
+```
+
+
+ * 프로그램 및 서버 실행
+```
+ > python manage.py runserver --noreload
+```
