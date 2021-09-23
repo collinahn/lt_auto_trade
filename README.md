@@ -93,6 +93,46 @@ class SharedMem(object):
             self.log.INFO("SharedMem init:", self.__il_AccountInfo)
 ```
 
+* utilsLT.py -> QueueLT Class
+  * 스레드 간 주고받을 커스텀 큐 자료구조를 정의.
+  * 인스턴스를 생성할 때 큐의 크기와 이름을 인자로 필요로한다.
+  * 이미 있는 이름을 받으면 존재하는 인스턴스를 넘겨줌으로써 편리하게 사용할 수 있도록 설계.
+
+```python
+class QueueLT:
+    __mset_Instance = set()
+    __mdict_MstInstance = {}
+
+    def __new__(cls, nSize: int, sName: str):
+        if hasattr(cls, "_instance") and sName in QueueLT.__mset_Instance:
+            cls._instance = QueueLT.__mdict_MstInstance[sName]
+        else:
+            cls._instance = super().__new__(cls)
+            QueueLT.__mdict_MstInstance[sName] = cls._instance
+            cls.log = Logger()
+
+        cls.log.INFO("Name:", sName, cls._instance)
+        return cls._instance
+
+    def __init__(self, nSize: int, sName: str):
+        if sName not in QueueLT.__mset_Instance: 
+            self.__is_Name = sName 
+            self.__iq_Queue = [None] * nSize
+            self.__in_QueueSize = nSize
+            self.__in_HeadPointIdx = 0
+            self.__in_TailPointIdx = 0
+
+            QueueLT.__mset_Instance.add(sName)
+
+            self.lock = threading.Lock() # 서로 다른 스레드에서 푸시할 때 데이터의 경쟁상태 방지
+
+            self.log.INFO(sName, "Queue init, size:", nSize)
+
+        else: 
+            self.log.WARNING(sName, "Queue Called Again")
+```
+        
+
 ### Usage
  * Anaconda3 32bit 가상환경 구성하기
 ```
