@@ -57,7 +57,7 @@ class GetPutDB(object):
             con.close()
         except Exception as e:
             return self.exception_handling(e, con)
-        return rows     #[(9415,), (28050,)]
+        return rows     #[(9415, "logicOption"), (28050, "logicOption")]
 
 
     #메인 메모리 요소들을 DB에 저장

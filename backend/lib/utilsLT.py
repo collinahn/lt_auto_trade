@@ -38,9 +38,10 @@ class QueueLT:
 
             QueueLT.__mset_Instance.add(sName)
 
-            self.lock = threading.Lock() # 서로 다른 스레드에서 푸시할 때 데이터의 경쟁상태 방지
+            self.lock = threading.Lock() # 서로 다른 스레드에서 푸시할 때
 
             self.log.INFO(sName, "Queue init, size:", nSize)
+
 
         else: 
             self.log.WARNING(sName, "Queue Called Again")
@@ -49,7 +50,7 @@ class QueueLT:
     def pushQueue(self, value: int or dict) -> bool:
         n_NextTailPointIdx = (self.__in_TailPointIdx +1) % self.__in_QueueSize
 
-        if n_NextTailPointIdx is self.__in_HeadPointIdx:            # 테일+1 == 헤드(버퍼 full)
+        if self.isFull():            # 테일+1 == 헤드(버퍼 full)
             self.log.WARNING(self.__is_Name, "Queue Full") 
             return False
 
@@ -65,7 +66,7 @@ class QueueLT:
     def pullQueue(self) -> bool:
         n_NextHeadPointIdx = (self.__in_HeadPointIdx+1) % self.__in_QueueSize
 
-        if self.__in_HeadPointIdx == self.__in_TailPointIdx:        # 테일 == 헤드 (buffer empty)
+        if self.isEmpty():        # 테일 == 헤드 (buffer empty)
             return False
         self.__in_HeadPointIdx = n_NextHeadPointIdx
         return True
@@ -100,6 +101,8 @@ class QueueLT:
         back = queue[:self.__in_TailPointIdx]
         front = queue[self.__in_TailPointIdx:]
         return front + back #넣은 순서대로 있는 리스트가 반환
+
+        # return self.__iq_Queue[:self.__in_TailPointIdx] + self.__iq_Queue[self.__in_TailPointIdx:]
 
     #None이 아닌 자료만 내보낸다
     def getTrimmedList(self) -> list:
